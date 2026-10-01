@@ -24,7 +24,7 @@ export const SEND_TONE = {
 
 /**
  * 接收提示音：1200 Hz 正弦，约 0.26 s，淡入淡出各 0.05 s，较快下滑，听感 "xiu~"。
- * 音高更高、时值更短，并叠加一层轻二次谐波使音色更亮更脆。
+ * 同样是单一正弦音，只靠更高的音高与更短的时值同发送音区分。
  */
 export const RECEIVE_TONE = {
   frequency: 1200,
@@ -35,76 +35,70 @@ export const RECEIVE_TONE = {
   glideTime: 0.12,
 };
 
-/** 接收音叠加的二次谐波，用于与发送音的纯正弦音色形成区分。 */
-export const RECEIVE_HARMONIC = {
-  frequency: 2400,
-  glideTo: 2040,
-  peak: 0.05,
-};
+/**
+ * 发送音相对所选音效的移调系数：降低一个八度。
+ * 这样发送音同样跟随用户所选的音效，又与接收音在高音区/低音区上区分开。
+ */
+export const SEND_TRANSPOSE = 0.5;
 
-/** 内置音色的一个分音。 */
-export interface SoundPartial {
-  /** 相对基频的倍数；非整数比例会产生金属、木质等音色。 */
-  ratio: number;
-  /** 该分音的峰值增益。 */
-  gain: number;
-  /** 振荡器波形，决定音色。 */
-  type: "sine" | "triangle" | "square" | "sawtooth";
-}
+/** 振荡器波形，决定音色。 */
+export type SoundWave = "sine" | "triangle" | "square" | "sawtooth";
 
-/** 内置可选音色。 */
+/**
+ * 内置可选音色。
+ * 每种音色只用一个振荡器发声，确保一次事件只听到一个声音，
+ * 音色差异来自波形本身（正弦/方波/三角波），而不是叠加多个音。
+ */
 export interface SoundPreset {
   id: string;
   name: string;
+  /** 基频。 */
   frequency: number;
+  /** 总时长。 */
   duration: number;
   /** 起音时长，用于避免爆音。 */
   attack: number;
-  partials: SoundPartial[];
+  /** 振荡器波形。 */
+  type: SoundWave;
+  /** 峰值增益。 */
+  peak: number;
 }
 
 /**
  * 内置音色预设：在系统默认之外再提供 3 种提示音。
- * 四者的基频、时长与波形均不同，音色彼此区分明显；
- * 全部由振荡器合成，不依赖外部资源，因此不受 CSP 与网络影响。
+ * 三者的基频、时长与波形均不同，音色彼此区分明显；
+ * 全部由单个振荡器合成，不依赖外部资源，因此不受 CSP 与网络影响。
  */
 export const SOUND_PRESETS: SoundPreset[] = [
   {
-    // 明亮的钟琴音：非整数分音 + 长衰减，余音悠长。
+    // 明亮钟琴音：高音正弦 + 长衰减，余音悠长。
     id: "chime",
     name: "Chime",
     frequency: 1046.5,
     duration: 0.9,
     attack: 0.012,
-    partials: [
-      { ratio: 1, gain: 0.14, type: "sine" },
-      { ratio: 2.76, gain: 0.06, type: "sine" },
-      { ratio: 5.4, gain: 0.03, type: "sine" },
-    ],
+    type: "sine",
+    peak: 0.18,
   },
   {
-    // 电子脉冲：方波主音 + 低八度三角波，短促、有数字感。
+    // 电子脉冲：方波，短促、有数字感，音色明亮发脆。
     id: "pulse",
     name: "Pulse",
     frequency: 660,
     duration: 0.16,
     attack: 0.005,
-    partials: [
-      { ratio: 1, gain: 0.1, type: "square" },
-      { ratio: 0.5, gain: 0.04, type: "triangle" },
-    ],
+    type: "square",
+    peak: 0.12,
   },
   {
-    // 木质马林巴：三角波主音 + 四倍频泛音，温暖、颗粒感强。
+    // 木质马林巴：三角波，温暖、颗粒感强，介于正弦与方波之间。
     id: "marimba",
     name: "Marimba",
     frequency: 523.25,
     duration: 0.5,
     attack: 0.008,
-    partials: [
-      { ratio: 1, gain: 0.15, type: "triangle" },
-      { ratio: 4, gain: 0.035, type: "sine" },
-    ],
+    type: "triangle",
+    peak: 0.18,
   },
 ];
 
@@ -270,7 +264,7 @@ function playSendTone(ctx: AudioContext) {
   );
 }
 
-/** 接收提示音：1200 Hz 正弦 + 轻二次谐波，音色更亮更脆，听感 "xiu~"。 */
+/** 接收提示音：1200 Hz 单一正弦，只响一个音，听感 "xiu~"。 */
 function playReceiveTone(ctx: AudioContext) {
   const start = ctx.currentTime;
   playSine(
@@ -283,46 +277,40 @@ function playReceiveTone(ctx: AudioContext) {
     RECEIVE_TONE.peak,
     RECEIVE_TONE.glideTime,
   );
-  playSine(
-    ctx,
-    start,
-    RECEIVE_HARMONIC.frequency,
-    RECEIVE_HARMONIC.glideTo,
-    RECEIVE_TONE.duration,
-    RECEIVE_TONE.fade,
-    RECEIVE_HARMONIC.peak,
-    RECEIVE_TONE.glideTime,
-  );
 }
 
-/** 播放内置音色预设：按分音叠加，用指数衰减包络保证音质干净、无爆音。 */
-function playPresetTone(ctx: AudioContext, preset: SoundPreset) {
+/**
+ * 播放内置音色预设：只用一个振荡器，配合指数衰减包络，
+ * 保证一次事件只发一个声音，且干净无爆音。
+ * transpose 用于整体移调（发送音取其低八度变体），默认 1 表示原调。
+ */
+function playPresetTone(
+  ctx: AudioContext,
+  preset: SoundPreset,
+  transpose = 1,
+) {
   const start = ctx.currentTime;
-  // 峰值求和超出上限时整体缩放，避免叠加后削波，保持音质清晰。
-  const peakSum = preset.partials.reduce((sum, partial) => sum + partial.gain, 0);
-  const scale = peakSum > 0.24 ? 0.24 / peakSum : 1;
-  for (const partial of preset.partials) {
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    oscillator.type = partial.type;
-    oscillator.frequency.setValueAtTime(
-      preset.frequency * partial.ratio,
-      start,
-    );
-    gain.gain.setValueAtTime(0.0001, start);
-    gain.gain.exponentialRampToValueAtTime(
-      partial.gain * scale,
-      start + preset.attack,
-    );
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + preset.duration);
-    oscillator.connect(gain).connect(ctx.destination);
-    oscillator.start(start);
-    oscillator.stop(start + preset.duration);
-  }
+  const oscillator = ctx.createOscillator();
+  const gain = ctx.createGain();
+  oscillator.type = preset.type;
+  oscillator.frequency.setValueAtTime(preset.frequency * transpose, start);
+  gain.gain.setValueAtTime(0.0001, start);
+  gain.gain.exponentialRampToValueAtTime(preset.peak, start + preset.attack);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + preset.duration);
+  oscillator.connect(gain).connect(ctx.destination);
+  oscillator.start(start);
+  oscillator.stop(start + preset.duration);
 }
 
-/** 解码并播放用户上传的音频；记录缺失或解码失败时返回 false 由上层回退默认音。 */
-async function playCustom(ctx: AudioContext, id: string): Promise<boolean> {
+/**
+ * 解码并播放用户上传的音频；记录缺失或解码失败时返回 false 由上层回退默认音。
+ * playbackRate 用于整体移调（发送音取其低八度变体），默认 1 表示原速原调。
+ */
+async function playCustom(
+  ctx: AudioContext,
+  id: string,
+  playbackRate = 1,
+): Promise<boolean> {
   try {
     let buffer = bufferCache.get(id);
     if (!buffer) {
@@ -335,6 +323,7 @@ async function playCustom(ctx: AudioContext, id: string): Promise<boolean> {
     }
     const source = ctx.createBufferSource();
     source.buffer = buffer;
+    source.playbackRate.value = playbackRate;
     source.connect(ctx.destination);
     source.start();
     return true;
@@ -431,14 +420,30 @@ export function useNotificationSound() {
     return trigger(selection.value);
   }
 
-  /** 自己发送消息成功后调用；固定使用发送音，不受音效选择影响。 */
+  /**
+   * 自己发送消息成功后调用。
+   * 跟随所选音效，但整体降低一个八度，与接收音在高音区/低音区上区分开；
+   * 系统默认仍使用规格定义的 800 Hz 发送音。
+   */
   async function playSend() {
     if (!enabled.value) return;
     const ctx = audioContext();
     if (!ctx) return;
     try {
       if (ctx.state === "suspended") await ctx.resume();
-      playSendTone(ctx);
+      const resolved = resolveSoundId(selection.value, availableIds());
+      const preset = SOUND_PRESETS.find((item) => item.id === resolved);
+      if (preset) {
+        playPresetTone(ctx, preset, SEND_TRANSPOSE);
+        return;
+      }
+      if (resolved === DEFAULT_SOUND_ID) {
+        playSendTone(ctx);
+        return;
+      }
+      if (!(await playCustom(ctx, resolved, SEND_TRANSPOSE))) {
+        playSendTone(ctx);
+      }
     } catch {
       /* 播放失败不影响发送主流程。 */
     }

@@ -6,8 +6,8 @@ const {
   SOUND_SELECTION_KEY,
   SEND_TONE,
   RECEIVE_TONE,
-  RECEIVE_HARMONIC,
   SOUND_PRESETS,
+  SEND_TRANSPOSE,
   resolveSoundId,
 } = await import(process.env.LOCALCHAT_SOUND_MODULE);
 
@@ -29,14 +29,13 @@ test("receive tone is a 1200 Hz sine with 0.05 s fades near 0.3 s", () => {
   assert.ok(Math.abs(RECEIVE_TONE.duration - 0.3) <= 0.05);
 });
 
-test("send and receive tones differ clearly in pitch, timbre and duration", () => {
+test("send and receive tones differ clearly in pitch and duration", () => {
   // 音高：相差一个纯五度以上，听觉可立即区分。
   assert.ok(RECEIVE_TONE.frequency - SEND_TONE.frequency >= 300);
   // 时长：接收音明显更短。
   assert.ok(SEND_TONE.duration - RECEIVE_TONE.duration >= 0.05);
-  // 音色：接收音叠加二次谐波（亮度更高），发送音为纯净正弦。
-  assert.equal(RECEIVE_HARMONIC.frequency, RECEIVE_TONE.frequency * 2);
-  assert.ok(RECEIVE_HARMONIC.peak > 0 && RECEIVE_HARMONIC.peak < RECEIVE_TONE.peak);
+  // 两者都是单一正弦音：正弦无泛音，而固定频率的正弦只会响出一个音。
+  assert.ok(SEND_TONE.frequency > 0 && RECEIVE_TONE.frequency > 0);
 });
 
 test("offers at least three built-in presets with unique ids and names", () => {
@@ -59,23 +58,28 @@ test("built-in presets have clearly distinct pitch, duration and timbre", () => 
     new Set(SOUND_PRESETS.map((preset) => preset.duration)).size,
     SOUND_PRESETS.length,
   );
-  // 主音波形至少有 3 种，覆盖正弦/三角/方波，音色差异明显。
-  assert.ok(
-    new Set(SOUND_PRESETS.map((preset) => preset.partials[0].type)).size >= 3,
-  );
+  // 波形至少有 3 种，覆盖正弦/三角/方波，音色差异来自波形本身。
+  assert.ok(new Set(SOUND_PRESETS.map((preset) => preset.type)).size >= 3);
+});
+
+test("each preset is a single tone so one event never sounds twice", () => {
+  // 回归保护：此前用多个分音叠加塑造音色，听感上会同时响出两个音。
+  const allowed = new Set(["sine", "triangle", "square", "sawtooth"]);
+  for (const preset of SOUND_PRESETS) {
+    assert.ok(allowed.has(preset.type), `${preset.id} has an invalid waveform`);
+    // 每个音色只声明一个波形与一个峰值，不再有 partials 分音数组。
+    assert.equal("partials" in preset, false, `${preset.id} must not layer`);
+  }
 });
 
 test("built-in presets keep clean sound quality (no clipping, no clicks)", () => {
   for (const preset of SOUND_PRESETS) {
-    assert.ok(preset.partials.length >= 1, `${preset.id} needs partials`);
     assert.ok(preset.attack > 0, `${preset.id} needs an attack`);
     assert.ok(preset.attack < preset.duration, `${preset.id} attack too long`);
     assert.ok(
-      preset.partials.every((partial) => partial.ratio > 0 && partial.gain > 0),
-      `${preset.id} partials must be positive`,
+      preset.peak > 0 && preset.peak <= 0.24,
+      `${preset.id} peak would clip`,
     );
-    const peak = preset.partials.reduce((sum, partial) => sum + partial.gain, 0);
-    assert.ok(peak <= 0.24, `${preset.id} peak ${peak} would clip`);
   }
 });
 
@@ -83,6 +87,18 @@ test("built-in presets resolve as valid selections and are kept across reload", 
   const available = [...SOUND_PRESETS.map((preset) => preset.id), "custom-1"];
   for (const preset of SOUND_PRESETS) {
     assert.equal(resolveSoundId(preset.id, available), preset.id);
+  }
+});
+
+test("sending follows the selected preset, transposed one octave down", () => {
+  // 发送音与接收音使用同一套音效，仅移调一个八度，因此切换音效在两端都可听出差异。
+  assert.equal(SEND_TRANSPOSE, 0.5);
+  const sendBases = SOUND_PRESETS.map(
+    (preset) => preset.frequency * SEND_TRANSPOSE,
+  );
+  assert.equal(new Set(sendBases).size, SOUND_PRESETS.length);
+  for (const preset of SOUND_PRESETS) {
+    assert.ok(preset.frequency * SEND_TRANSPOSE < preset.frequency);
   }
 });
 

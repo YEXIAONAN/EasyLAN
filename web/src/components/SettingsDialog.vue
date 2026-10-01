@@ -90,7 +90,7 @@ function choose(event: Event) {
         <div class="settings-row">
           <div class="settings-row-text">
             <strong>Notification sound</strong>
-            <p>Play distinct sounds for sending and receiving messages.</p>
+            <p>Send and receive use the selected sound, with sending one octave lower.</p>
           </div>
           <label class="switch">
             <input

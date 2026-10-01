@@ -50,7 +50,7 @@ const {
   cancel,
   dismiss,
 } = useUpload(username, clientId);
-// 发送成功时播放发送提示音（800 Hz，听感 "hui~"）。
+// 发送成功时播放发送提示音：跟随所选音效的低八度变体，听感 "hui~"。
 function sendMessage(content: string) {
   const sent = sendText(content);
   if (sent) void sound.playSend();
