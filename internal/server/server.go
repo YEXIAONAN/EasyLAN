@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"localchat/internal/buildinfo"
 	"localchat/internal/chat"
 	"localchat/internal/network"
 	"localchat/internal/transfer"
@@ -33,7 +34,7 @@ func New() (*Server, error) {
 	mux.HandleFunc("GET /api/files/{id}", s.Files.Download)
 	mux.HandleFunc("GET /api/info", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{"version": "0.1.0", "lanAddresses": network.LANAddresses(), "maxMessageSize": chat.MaxMessageBytes, "maxFileSize": transfer.MaxFileSize, "chunkSize": transfer.ChunkSize})
+		json.NewEncoder(w).Encode(map[string]any{"name": buildinfo.Name, "version": buildinfo.Version, "lanAddresses": network.LANAddresses(), "maxMessageSize": chat.MaxMessageBytes, "maxFileSize": transfer.MaxFileSize, "chunkSize": transfer.ChunkSize})
 	})
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) { http.Error(w, "API not found.", 404) })
 	mux.Handle("/", http.FileServerFS(web.Assets()))

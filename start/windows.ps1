@@ -17,13 +17,21 @@ try {
     if ($localchatPort -notmatch '^\d{1,5}$' -or [int]$localchatPort -lt 1 -or [int]$localchatPort -gt 65535) {
         throw 'LOCALCHAT_PORT must be a number from 1 to 65535.'
     }
+    $localchatArchitecture = $env:PROCESSOR_ARCHITEW6432
+    if ([string]::IsNullOrWhiteSpace($localchatArchitecture)) { $localchatArchitecture = $env:PROCESSOR_ARCHITECTURE }
+    switch ($localchatArchitecture.ToUpperInvariant()) {
+        'AMD64' { $localchatArch = 'amd64' }
+        'ARM64' { $localchatArch = 'arm64' }
+        default { throw 'Supported Windows CPU architectures: amd64 and arm64.' }
+    }
+    $localchatFilename = "localchat-windows-$localchatArch.exe"
     $localchatBinary = $null
-    foreach ($relative in @('release\localchat-windows-amd64.exe', 'localchat-windows-amd64.exe', 'localchat.exe')) {
+    foreach ($relative in @("release\$localchatFilename", $localchatFilename, 'localchat.exe')) {
         $candidate = Join-Path $localchatRoot $relative
         if (Test-Path -LiteralPath $candidate -PathType Leaf) { $localchatBinary = $candidate; break }
     }
     if (-not $localchatBinary) {
-        throw 'Missing localchat-windows-amd64.exe. Put it in the project root or release/, or build the project first (see README.md).'
+        throw "Missing $localchatFilename. Put it in the project root or release/, or build the project first (see README.md)."
     }
     Write-Host "Starting LocalChat on port $localchatPort..."
     Set-Location -LiteralPath $localchatRoot

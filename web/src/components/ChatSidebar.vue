@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from "vue";
 import type { ConnectionState, Device } from "../types/message";
+import { REPOSITORY_URL } from "../config";
 
 const props = defineProps<{
   devices: Device[];
-  username: string;
-  ip: string;
+  version: string;
+  infoLoading: boolean;
   clientId: string;
   state: ConnectionState;
   mobile: boolean;
@@ -118,22 +119,32 @@ function trapFocus(event: KeyboardEvent) {
         Devices <span>· {{ devices.length }}</span>
       </h2>
       <ul class="device-list">
-        <li v-for="device in devices" :key="device.id" class="device-row">
-          <span class="avatar" aria-hidden="true">{{
-            [...device.username][0]?.toUpperCase()
-          }}</span>
-          <div class="device-details">
-            <strong>{{ device.username }}</strong>
-            <p>
-              <span v-if="device.id === clientId">You · </span
-              ><span>{{ device.ip }}</span>
-            </p>
-          </div>
-          <i
-            class="status-dot connected"
-            title="Online"
-            aria-label="Online"
-          ></i>
+        <li v-for="device in devices" :key="device.id">
+          <component
+            :is="device.id === clientId ? 'button' : 'div'"
+            class="device-row"
+            :type="device.id === clientId ? 'button' : undefined"
+            :aria-label="
+              device.id === clientId ? 'Change your name' : undefined
+            "
+            @click="device.id === clientId && emit('rename')"
+          >
+            <span class="avatar" aria-hidden="true">{{
+              [...device.username][0]?.toUpperCase()
+            }}</span>
+            <div class="device-details">
+              <strong>{{ device.username }}</strong>
+              <p>
+                <span v-if="device.id === clientId">You · </span
+                ><span>{{ device.ip }}</span>
+              </p>
+            </div>
+            <i
+              class="status-dot connected"
+              title="Online"
+              aria-label="Online"
+            ></i>
+          </component>
         </li>
       </ul>
       <p v-if="!devices.length" class="sidebar-empty">
@@ -149,32 +160,30 @@ function trapFocus(event: KeyboardEvent) {
       <div class="sidebar-server">
         <span>Server</span><span class="server-address">{{ server }}</span>
       </div>
-      <button
-        class="sidebar-user"
-        aria-label="Change your name"
-        @click="emit('rename')"
+      <a
+        v-if="REPOSITORY_URL"
+        class="sidebar-repository"
+        :href="REPOSITORY_URL"
+        target="_blank"
+        rel="noopener noreferrer"
       >
-        <span class="avatar user-avatar" aria-hidden="true">{{
-          [...(username || "?")][0]?.toUpperCase()
-        }}</span>
-        <span class="current-user"
-          ><strong>{{ username || "Choose your name" }}</strong
-          ><span class="user-address">{{ ip || "Not connected" }}</span></span
-        >
-        <svg
-          class="edit-icon"
-          viewBox="0 0 24 24"
-          fill="none"
-          aria-hidden="true"
-        >
-          <path
-            d="m15 5 4 4M5 19l1-5L16 4a2.8 2.8 0 0 1 4 4L10 18l-5 1Z"
-            stroke="currentColor"
-            stroke-width="1.6"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </button>
+        <span class="repository-label"
+          >GitHub
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path
+              d="M9 3h4v4M13 3 7 9M7 3H3v10h10V9"
+              stroke="currentColor"
+              stroke-width="1.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+        <span>LocalChat Repository</span>
+      </a>
+      <p class="sidebar-version" aria-label="Application version">
+        {{ version || (infoLoading ? "…" : "Version unavailable") }}
+      </p>
     </div>
   </aside>
 </template>

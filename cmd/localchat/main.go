@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"localchat/internal/buildinfo"
 	"localchat/internal/network"
 	"localchat/internal/server"
 )
@@ -46,7 +47,7 @@ func run() error {
 	srv := &http.Server{Handler: app, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 5 * time.Minute, IdleTimeout: 90 * time.Second, MaxHeaderBytes: 16 * 1024}
 	_, port, _ := net.SplitHostPort(listener.Addr().String())
 	url := "http://127.0.0.1:" + port
-	fmt.Printf("\nLocalChat v0.1.0\n\n✓ Server started\n\nLocal\n  %s\n\nLAN\n", url)
+	fmt.Printf("\n%s %s\n\n✓ Server started\n\nLocal\n  %s\n\nLAN\n", buildinfo.Name, buildinfo.Version, url)
 	for _, ip := range network.LANAddresses() {
 		fmt.Printf("  http://%s:%s\n", ip, port)
 	}

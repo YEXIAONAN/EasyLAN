@@ -1,6 +1,21 @@
-# LocalChat v0.1.0 验证记录
+# LocalChat 验证记录
 
 日期：2026-10-01。执行环境为 macOS；浏览器客户端在同一台机器上分别使用 `127.0.0.1` 与 `localhost`。以下记录区分真实浏览器/HTTP 测试与网络故障模拟，不把跨平台编译当作异系统实机验证。
+
+## UI Polish、CI 与 Release 验证
+
+本轮只调整侧栏底部与 Composer 宽度，保留消息布局、配色、WebSocket 和文件传输实现。
+
+- `npm ci`、11 项前端测试、Vue/TypeScript 构建、`go test ./...`、`go vet ./...`、`go build ./cmd/localchat` 通过。
+- `/api/info` 测试覆盖默认 `dev` 与注入版本 `v0.2.0`，同时保留已有文件限制字段。实际启动注入版本的 macOS 二进制，横幅与 API 均为 `v0.2.0`。
+- 六个平台均以 `CGO_ENABLED=0` 编译；版本化压缩包名称、单个程序内容、Unix 执行权限与六项 SHA-256 校验通过。macOS 打包禁用 AppleDouble 隐藏元数据。打包版本与编译版本不一致时明确拒绝。
+- `actionlint v1.7.12` 检查两个工作流通过；CI 仅 main push / PR，Release 仅版本 Tag push。未创建正式 Tag 或 Release 来验证发布。
+- 1440 × 900 桌面：侧栏 230px，Waiting 仅在 Devices 出现一次，保留 You；Footer 显示 Server、真实仓库链接与 API 版本。GitHub 链接为 `_blank`、`noopener noreferrer`。Devices 中点击自己仍能打开改名对话框并保存。
+- 主面板宽 1210px，Composer 内部宽 1170px（左右各 20px），高度保持 73px；消息流仍为 960px。
+- 两个浏览器客户端正常发送、接收消息；实际选择 64 字节测试文件，上传与对方下载成功，下载与源文件逐字节一致。
+- 390 × 844 Smoke Test：文档宽度 390，无横向溢出，Header、消息、Drawer 打开/关闭、输入、发送和文件选择/上传通过；测试后恢复视口设置。
+
+当前桌面与移动端截图已更新。Windows、Linux、Apple Silicon 仍为交叉编译验证，未做异系统实机运行；正式发布及资产上传将由下一次版本 Tag 触发。
 
 ## 自动检查
 

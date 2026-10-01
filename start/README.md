@@ -4,7 +4,7 @@
 - **macOS**：双击 `macos.command`。
 - **Linux**：执行 `./start/linux.sh`，或在支持脚本运行的文件管理器中双击。
 
-脚本会自动寻找当前系统/CPU 的二进制，先检查项目根目录的 `release/`，然后检查根目录中的同名程序，最后检查开发构建的 `localchat` / `localchat.exe`。缺少程序时会提示构建方式，不会自动安装 Go、Node 或其他依赖。
+脚本会自动寻找当前系统/CPU 的二进制（Windows、Linux、macOS 均支持 AMD64 / ARM64），先检查项目根目录的 `release/`，然后检查根目录中的同名程序，最后检查开发构建的 `localchat` / `localchat.exe`。缺少程序时会提示构建方式，不会自动安装 Go、Node 或其他依赖。
 
 ## 设置端口
 

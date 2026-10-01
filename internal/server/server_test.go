@@ -1,7 +1,10 @@
 package server
 
 import (
+	"encoding/json"
+
 	"io"
+	"localchat/internal/buildinfo"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -54,5 +57,36 @@ func TestEmbeddedFrontendAndOriginChecks(t *testing.T) {
 	resp.Body.Close()
 	if !strings.Contains(string(body), `"chunkSize":16777216`) {
 		t.Fatal("wrong limits")
+	}
+}
+
+func TestInfoReportsBinaryVersion(t *testing.T) {
+	app, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer app.Close()
+	original := buildinfo.Version
+	defer func() { buildinfo.Version = original }()
+	for _, version := range []string{"dev", "v0.2.0"} {
+		t.Run(version, func(t *testing.T) {
+			buildinfo.Version = version
+			response := httptest.NewRecorder()
+			app.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/info", nil))
+			if response.Code != http.StatusOK || response.Header().Get("Content-Type") != "application/json" {
+				t.Fatalf("unexpected info response: %d %v", response.Code, response.Header())
+			}
+			var info struct {
+				Name      string `json:"name"`
+				Version   string `json:"version"`
+				ChunkSize int64  `json:"chunkSize"`
+			}
+			if err := json.Unmarshal(response.Body.Bytes(), &info); err != nil {
+				t.Fatal(err)
+			}
+			if info.Name != "LocalChat" || info.Version != version || info.ChunkSize != 16*1024*1024 {
+				t.Fatalf("wrong binary identity or missing existing limits: %+v", info)
+			}
+		})
 	}
 }

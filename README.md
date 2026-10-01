@@ -1,4 +1,6 @@
-# LocalChat v0.1.0
+# LocalChat
+
+[![CI](https://github.com/YEXIAONAN/LocalChat/actions/workflows/ci.yml/badge.svg)](https://github.com/YEXIAONAN/LocalChat/actions/workflows/ci.yml)
 
 A lightweight local network chat and temporary file transfer tool.
 
@@ -6,27 +8,28 @@ A lightweight local network chat and temporary file transfer tool.
 
 ## 使用
 
-从 `release/` 选择当前服务器设备对应的可执行文件：
+从 [GitHub Releases](https://github.com/YEXIAONAN/LocalChat/releases) 下载当前服务器设备对应的压缩包。下列名称以 `v0.2.0` 为例，实际版本取决于发布 Tag：
 
-| 平台 | 程序 |
-| --- | --- |
-| Windows x64 | `localchat-windows-amd64.exe` |
-| Linux x64 | `localchat-linux-amd64` |
-| Linux ARM64 | `localchat-linux-arm64` |
-| macOS Intel | `localchat-darwin-amd64` |
-| macOS Apple Silicon | `localchat-darwin-arm64` |
+| 平台 | Release 压缩包 | 解压后的程序 |
+| --- | --- | --- |
+| Windows x64 | `localchat-v0.2.0-windows-amd64.zip` | `localchat.exe` |
+| Windows ARM64 | `localchat-v0.2.0-windows-arm64.zip` | `localchat.exe` |
+| Linux x64 | `localchat-v0.2.0-linux-amd64.tar.gz` | `localchat` |
+| Linux ARM64 | `localchat-v0.2.0-linux-arm64.tar.gz` | `localchat` |
+| macOS Intel | `localchat-v0.2.0-darwin-amd64.tar.gz` | `localchat` |
+| macOS Apple Silicon | `localchat-v0.2.0-darwin-arm64.tar.gz` | `localchat` |
 
-Windows 双击 `.exe`，或在终端运行。Linux/macOS：
+Windows 双击解压后的 `.exe`，或在终端运行。Linux/macOS 的压缩包保留执行权限：
 
 ```sh
-chmod +x localchat-darwin-arm64
-./localchat-darwin-arm64
+./localchat
+# 文件系统未保留执行权限时：chmod +x localchat
 ```
 
-程序默认监听 `0.0.0.0:8787`，启动后显示本机可用 IPv4 地址，并尝试打开 `http://127.0.0.1:8787`。另一台设备在同一个局域网内，用浏览器打开终端显示的 LAN 地址。输入名字后即可聊天；名字可以点击侧栏底部的当前用户修改；手机上先打开左上角菜单。
+程序默认监听 `0.0.0.0:8787`，启动后显示本机可用 IPv4 地址，并尝试打开 `http://127.0.0.1:8787`。另一台设备在同一个局域网内，用浏览器打开终端显示的 LAN 地址。输入名字后即可聊天；名字可以点击 Devices 列表中标有 You 的自己那一行修改；手机上先打开左上角菜单。
 
 ```text
-LocalChat v0.1.0
+LocalChat dev
 
 ✓ Server started
 
@@ -68,7 +71,7 @@ LAN
 LOCALCHAT_PORT=8787
 ```
 
-仓库中提供 `.env.example`，克隆后可复制为 `.env`。当前工作目录已经创建默认 `.env`；个人 `.env` 不提交到 Git。
+仓库中提供 `.env.example`，克隆后可复制为 `.env`。个人 `.env` 不提交到 Git。
 
 ```sh
 cp .env.example .env
@@ -111,9 +114,9 @@ LOCALCHAT_PORT=9000 ./start/linux.sh
 
 V1 使用 HTTP，没有加密或身份认证，适用于可信的临时局域网。不要将端口映射到公网。跨来源浏览器的 WebSocket/上传请求会被拒绝，但这不是访问控制；能直接连接的设备均能使用当前服务。
 
-## 开发
+## Development / 开发
 
-仅开发机器需要 Go **1.23+**、Node.js **20.19+** 和 npm。生产用户只需要对应平台的程序与浏览器。
+开发机器需要 Go **1.23+**（最低版本由 `go.mod` 定义）和 Node.js **24 LTS**（由根目录 `.node-version` 定义）。GitHub Actions 使用 `setup-go` 的 `go-version-file: go.mod` 与 `setup-node` 的 `node-version-file: .node-version`，不依赖开发者本机的默认版本。生产用户只需要程序与浏览器。
 
 ```sh
 cd web
@@ -127,15 +130,20 @@ npm run dev
 go run ./cmd/localchat -no-open
 ```
 
-访问 Vite 显示的开发地址（默认 `http://localhost:5173`）。Vite 将 `/api` 和 `/ws` 代理到 Go 服务的 8787 端口。所有字体、图标和资源均在本地，没有 CDN 请求。
+访问 Vite 显示的开发地址（默认 `http://localhost:5173`）。Vite 将 `/api` 和 `/ws` 代理到 Go 服务的 8787 端口；输出目录为 `web/dist/`。所有字体、图标和界面资源均在本地，没有 CDN 请求。
 
-## 生产构建
+推荐日常流程：feature branch → push → Pull Request → CI → Review → Merge main。源代码修改前端后，需要同步提交重新构建的 `web/dist`。
+
+## Build / 构建
 
 ```sh
 cd web
 npm ci
+npm test
 npm run build
 cd ..
+go test ./...
+go vet ./...
 CGO_ENABLED=0 go build -trimpath -o localchat ./cmd/localchat
 ./localchat
 ```
@@ -148,32 +156,78 @@ go build -trimpath -o localchat.exe ./cmd/localchat
 .\localchat.exe
 ```
 
-`web/embed.go` 通过 `//go:embed dist` 嵌入 `web/dist/`。本项目**保留生成的 dist 作为交付文件**，因此拿到源码后可直接执行 `go test` 或 `go build`；修改前端后必须重新 `npm run build`，再编译 Go。`web/dist` 不在 `.gitignore` 中，`node_modules` 和 release 二进制在忽略列表中。
+`web/embed.go` 通过 `//go:embed dist` 嵌入 `web/dist/`。本项目保留生成的 dist，因此仅检查后端时可直接执行 `go test` / `go build`。完整产品构建必须按照 **前端构建 → Go 编译** 的顺序，以嵌入最新界面。`node_modules`、个人 `.env` 和 `release/` 二进制不提交。
 
-## 测试与跨平台发布
+### 版本来源
 
-```sh
-go test -race ./...
-go vet ./...
-cd web
-npm test
-npm run build
-cd ..
-./scripts/build-release.sh
-```
-
-发布脚本先运行检查并重建前端，再生成五个平台的无 CGO 单二进制，以及 `release/SHA256SUMS`。运行该脚本需 POSIX shell（macOS/Linux，或 Windows 的 Git Bash）。单独交叉编译示例：
+`internal/buildinfo.Version` 是 CLI 和 `/api/info` 的唯一版本来源，默认 `dev`。侧栏版本从 API 读取；前端没有独立的产品版本字符串。`web/package.json` 的私有 npm 包版本仅是依赖元数据，不用于应用展示，也不需要随 Tag 修改。
 
 ```sh
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o release/localchat-windows-amd64.exe ./cmd/localchat
+CGO_ENABLED=0 go build -trimpath \
+  -ldflags "-X localchat/internal/buildinfo.Version=v0.2.0" \
+  -o localchat ./cmd/localchat
 ```
 
-也可使用 `make build` / `make test` / `make release`。测试说明和本机验收记录见 [docs/TESTING.md](docs/TESTING.md)。交叉编译成功不代表在另一种操作系统上完成了实机测试。
+启动横幅会显示 `LocalChat v0.2.0`。`GET /api/info` 返回 `name: "LocalChat"` 与同一个 `version: "v0.2.0"`，并保留局域网地址、文件/消息限制等现有字段。开发构建则显示 `dev`。
+
+GitHub 链接已根据当前 `origin` 配置在 [web/src/config.ts](web/src/config.ts)。迁移或 fork 项目时，可修改该文件中的 `REPOSITORY_URL`，并更新本 README 的 CI Badge 地址。
+
+## CI / 自动检查
+
+[ci.yml](.github/workflows/ci.yml) 只监听 **push 到 main** 和 **Pull Request**，仅有 `contents: read` 权限。两个独立 job 并行运行，失败时可定位到具体 step：
+
+- `frontend`：`npm ci` → `npm test` → `npm run build`（包含 TypeScript 检查）。
+- `backend`：`go test ./...` → `go vet ./...` → `go build ./cmd/localchat`。
+
+普通 CI 中，后端 job 使用已提交的 dist，前端 job 独立验证新构建。普通 `git push origin main` **只检查**，不创建 Tag、Release，也不上传二进制。CI Badge 显示真实工作流状态。
+
+建议在 Repository Settings → Branches / Rulesets 中保护 `main`，启用 Require status checks before merging，并选择 CI 产生的 `frontend`、`backend` 检查（GitHub 界面可能显示为 `CI / frontend`、`CI / backend`）。这是推荐设置，不由项目代码自动修改仓库权限。
+
+## Release / 发布
+
+[release.yml](.github/workflows/release.yml) 仅监听 **push Tag `v*.*.*`**，并要求正式版本格式 `vX.Y.Z`。使用 `contents: write` 权限创建 Release，无其他写权限，也没有分支 push 或手动 dispatch 触发器。
+
+发布下一个版本，例如 `v0.2.0`：
+
+```sh
+git checkout main
+git pull --ff-only
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+GitHub Actions 自动重新运行前端安装、测试与构建，然后配置 Go、运行 Go test / vet，再使用 `CGO_ENABLED=0` 编译六个平台。`github.ref_name` 自动传给 `VERSION`，通过 ldflags 注入所有二进制，不需要手动改版本文件。
+
+编译后打包：Windows 使用 ZIP，内含 `localchat.exe`；Linux/macOS 使用 tar.gz，内含可执行的 `localchat`。生成包含六个压缩包 SHA-256 的 `SHA256SUMS.txt`，共上传 **7 个资产**。
+
+全部检查、编译和打包成功后，工作流创建名为 `LocalChat vX.Y.Z` 的 Release，自动生成 Release Notes，上传资产完成后才将草稿发布。检查失败不会创建 Release；上传失败不会把不完整草稿发布。无需手工编译平台或上传文件，也无需手工创建 Release。
+
+下载相应压缩包和 `SHA256SUMS.txt` 后可验证：
+
+```sh
+# 在包含六个压缩包的目录运行；只下载一个时可验证清单中对应条目。
+sha256sum -c SHA256SUMS.txt       # Linux
+shasum -a 256 -c SHA256SUMS.txt  # macOS
+```
+
+### 本地验证发布产物
+
+macOS/Linux 的本地发布脚本使用 Go、Node/npm 和系统 `zip`、`tar`、SHA-256 工具，不依赖 Docker 或 GoReleaser，也不会发布到 GitHub：
+
+```sh
+./scripts/build-release.sh                 # 默认 dev，完整检查 + 六平台编译/打包
+VERSION=v0.2.0 ./scripts/build-release.sh   # 仅本地生成带版本的产物
+```
+
+输出位于忽略的 `release/` 中。已有平台名称的裸二进制继续供 `start/` 使用；发布压缩包采用上述版本化名称。`build-binaries.sh` 与 `package-release.sh` 是工作流内部步骤，本地通常使用完整的 `build-release.sh`。后者要求二进制构建版本与打包版本相同，防止把 dev 程序标为正式版本。
+
+也可使用 `make build` / `make test` / `make release`。测试与本机验收记录见 [docs/TESTING.md](docs/TESTING.md)。交叉编译通过不代表完成异系统实机验证。
 
 ## 结构
 
 ```text
 cmd/localchat/       启动、监听、浏览器打开与信号退出
+internal/buildinfo/ 唯一产品版本，供 CLI/API 使用
 internal/chat/      WebSocket 连接、广播、身份与在线状态（不保存历史）
 internal/network/   RemoteAddr 解析与本机 LAN IPv4 探测
 internal/transfer/  临时会话、分片写入、流式合并、取消和下载
@@ -181,7 +235,8 @@ internal/server/    HTTP 路由、来源校验与嵌入资源服务
 web/src/            Vue 组件、WebSocket / 上传 / 拖拽 composables
 web/dist/           生产静态资源，嵌入 Go
 start/              Windows / macOS / Linux 一键启动与 .env 读取
-scripts/            发布构建
+scripts/            校验、六平台编译与打包（本地不发布）
+.github/workflows/  普通 CI 与 Tag Release 两个独立工作流
 ```
 
 ## 协议
@@ -193,6 +248,6 @@ scripts/            发布构建
 - `POST /api/files/{id}/complete`：校验、合并并广播 `file` 消息。
 - `DELETE /api/files/{id}`：取消未完成的上传。
 - `GET /api/files/{id}`：下载当前会话中已完成的文件。
-- `GET /api/info`：版本、局域网地址和大小限制。
+- `GET /api/info`：产品名称、Go 二进制版本、局域网地址和大小限制。
 
 所有文件和聊天操作均无需登录。HTTP 文件接口的 username/clientId 仅作为展示 metadata，不能作为身份认证；客户端提交的 IP 不被信任。

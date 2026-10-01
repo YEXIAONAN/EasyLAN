@@ -10,9 +10,11 @@ import { useUsername } from "./composables/useUsername";
 import { useWebSocket } from "./composables/useWebSocket";
 import { useUpload } from "./composables/useUpload";
 import { useFileDrop } from "./composables/useFileDrop";
+import { useAppInfo } from "./composables/useAppInfo";
 
 const { username, dialogOpen, save } = useUsername();
-const { messages, devices, state, ownIds, clientId, ip, error, sendText } =
+const { version, loading: infoLoading } = useAppInfo();
+const { messages, devices, state, ownIds, clientId, error, sendText } =
   useWebSocket(username);
 const {
   uploads,
@@ -65,8 +67,8 @@ const { dragging } = useFileDrop(queueFiles);
     ></div>
     <ChatSidebar
       :devices="devices"
-      :username="username"
-      :ip="ip"
+      :version="version"
+      :info-loading="infoLoading"
       :client-id="clientId"
       :state="state"
       :mobile="mobile"
