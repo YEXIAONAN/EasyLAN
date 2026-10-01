@@ -1,0 +1,14 @@
+web/node_modules/
+release/
+/localchat
+*.exe
+.DS_Store
+.idea/
+.vscode/
+*.tmp
+coverage.out
+.env
+.env.*
+!.env.example
+/localchat-darwin-*
+/localchat-linux-*

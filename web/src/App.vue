@@ -1,0 +1,134 @@
+<script setup lang="ts">
+import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import ChatSidebar from "./components/ChatSidebar.vue";
+import ChatHeader from "./components/ChatHeader.vue";
+import MessageList from "./components/MessageList.vue";
+import ChatComposer from "./components/ChatComposer.vue";
+import UsernameDialog from "./components/UsernameDialog.vue";
+import FileTransferCard from "./components/FileTransferCard.vue";
+import { useUsername } from "./composables/useUsername";
+import { useWebSocket } from "./composables/useWebSocket";
+import { useUpload } from "./composables/useUpload";
+import { useFileDrop } from "./composables/useFileDrop";
+
+const { username, dialogOpen, save } = useUsername();
+const { messages, devices, state, ownIds, clientId, ip, error, sendText } =
+  useWebSocket(username);
+const {
+  uploads,
+  error: uploadError,
+  addFiles,
+  pause,
+  resume,
+  cancel,
+  dismiss,
+} = useUpload(username, clientId);
+const media = window.matchMedia("(max-width: 767px)");
+const mobile = ref(media.matches);
+const drawerOpen = ref(false);
+const header = ref<InstanceType<typeof ChatHeader>>();
+
+function updateBreakpoint() {
+  mobile.value = media.matches;
+  drawerOpen.value = false;
+}
+onMounted(() => media.addEventListener("change", updateBreakpoint));
+onBeforeUnmount(() => media.removeEventListener("change", updateBreakpoint));
+async function closeDrawer() {
+  drawerOpen.value = false;
+  if (mobile.value) {
+    await nextTick();
+    header.value?.focusMenu();
+  }
+}
+function rename() {
+  drawerOpen.value = false;
+  dialogOpen.value = true;
+}
+function queueFiles(files: File[]) {
+  if (dialogOpen.value || state.value !== "connected") {
+    uploadError.value = "Connect to LocalChat before sending files.";
+    return;
+  }
+  addFiles(files);
+}
+const { dragging } = useFileDrop(queueFiles);
+</script>
+
+<template>
+  <div class="app-layout" :inert="dialogOpen">
+    <div
+      v-if="mobile && drawerOpen"
+      class="drawer-backdrop"
+      aria-hidden="true"
+      @click="closeDrawer"
+    ></div>
+    <ChatSidebar
+      :devices="devices"
+      :username="username"
+      :ip="ip"
+      :client-id="clientId"
+      :state="state"
+      :mobile="mobile"
+      :open="drawerOpen"
+      @close="closeDrawer"
+      @rename="rename"
+    />
+    <main class="chat-main" :inert="mobile && drawerOpen">
+      <ChatHeader
+        ref="header"
+        :state="state"
+        :count="devices.length"
+        :drawer-open="drawerOpen"
+        @menu="mobile && (drawerOpen = true)"
+      />
+      <MessageList :messages="messages" :own-ids="ownIds" />
+      <section
+        v-if="uploads.length"
+        class="transfer-tray"
+        aria-label="File transfers"
+      >
+        <FileTransferCard
+          v-for="upload in uploads"
+          :key="upload.key"
+          :upload="upload"
+          @pause="pause(upload)"
+          @resume="resume(upload)"
+          @cancel="cancel(upload)"
+          @dismiss="dismiss(upload)"
+        />
+      </section>
+      <div v-if="error || uploadError" class="error-banner" role="alert">
+        <span>{{ error || uploadError }}</span
+        ><button
+          class="icon-button"
+          aria-label="Dismiss error"
+          @click="
+            error = '';
+            uploadError = '';
+          "
+        >
+          ×
+        </button>
+      </div>
+      <ChatComposer
+        :connected="state === 'connected'"
+        :send-text="sendText"
+        @files="queueFiles"
+      />
+    </main>
+  </div>
+  <UsernameDialog
+    :open="dialogOpen"
+    :username="username"
+    @save="save"
+    @close="dialogOpen = false"
+  />
+  <div v-if="dragging && !dialogOpen" class="drop-overlay">
+    <div>
+      <span class="drop-symbol" aria-hidden="true">↥</span>
+      <h2>Drop files to send</h2>
+      <p>Up to 1 GB per file</p>
+    </div>
+  </div>
+</template>
