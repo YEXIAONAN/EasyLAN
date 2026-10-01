@@ -273,6 +273,33 @@ svg {
   border-top: 1px solid var(--border);
   padding: 14px 12px 12px;
 }
+.sidebar-sound {
+  border: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 6px 10px;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  text-align: left;
+  border-radius: 6px;
+  transition: background 150ms;
+}
+.sidebar-sound:hover {
+  background: var(--app-bg);
+}
+.sidebar-sound svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.sound-state {
+  margin-left: auto;
+  color: var(--text-muted);
+}
 .sidebar-server {
   display: flex;
   flex-direction: column;

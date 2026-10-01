@@ -2,6 +2,22 @@
 
 日期：2026-10-01。执行环境为 macOS；浏览器客户端在同一台机器上分别使用 `127.0.0.1` 与 `localhost`。以下记录区分真实浏览器/HTTP 测试与网络故障模拟，不把跨平台编译当作异系统实机验证。
 
+## v1.1.0 Notification v1 验证
+
+日期：2026-10-02，macOS。只增加客户端通知 composable、接收后的通知调用和 Sidebar Footer 的 Message sound 开关。Go 源码、协议、上传/下载/预览、Composer、依赖及 CI / Release 工作流没有修改。
+
+- 23 项前端测试通过，包含原有 17 项及新增 6 项通知测试。实际 notification / WebSocket composable 覆盖前台静默、同名不同连接、旧/新自己连接、非消息事件、99+、静音持久化、刷新清零、音频缺失/策略拒绝、画布/存储失败、异步图标加载与 unmount 清理。
+- `npm run build`、`go test ./...`、`go vet ./...`、`go build ./cmd/localchat` 通过。
+- 内置浏览器点击发送后 Web Audio Context 从 suspended 到 running。前台对方消息正常显示，title / favicon 不变；通知声音用原生图中的两个 Oscillator / Gain 节点验证，不把节点观察当作人工听感验收。
+- 内置浏览器在切换自身标签页后仍报告 visible，因此后台/返回场景通过 CDP 在隔离测试页面模拟 visibilityState / visibilitychange。测试页面正常接收真实 Go 服务的 WebSocket 广播，未直接调用通知 helper；模拟随后随刷新移除，不修改产品代码。标题依次为 (1)、(2)，favicon 为实际 Canvas PNG；自己后台的回显以及 join / leave 不增加未读，恢复 visible 后立即清零。
+- 隔离服务通过 64 个真实 HTTP PUT 上传恰好 1 GiB（二进制内容全零），每片 16 MiB；在第 32、第 64 片后，title 均为 LocalChat，原 favicon 保持，未创建 Oscillator。POST complete 后，文件卡片为 1.00 GB，title 为 (1)，红点出现，恰好创建一组双音；所有测试文件随隔离服务正常退出清理。
+- 关闭声音后接收真实消息，title 仍增加且不再创建声音节点。刷新保留 Off、清除未读。测试页禁用 Web Audio 后重新开启声音，真实消息继续显示且 title / favicon 继续正常，控制台无 error / warn；随后刷新恢复原生 API。
+- 390 × 844 Smoke Test：文档宽 390，无横向溢出；Drawer 和 Message sound On / Off 正常，开关不遮挡主聊天界面。完成后恢复桌面视口。
+- 最终注入 v1.1.0 的原生二进制中，实际文件选择/上传、61 字节文件预览与下载、200 KiB 自动 TXT 上传和普通文字发送通过；自己消息未改变 title。六平台压缩包和 SHA-256 本地校验通过。
+- 未引入音频素材、通知/音频/Canvas 依赖、系统通知权限、Service Worker 或云服务。实际浏览器对后台冻结/休眠、露出窗口的可见性及 autoplay 的处理仍以该浏览器为准；后端和聊天不依赖通知能力。
+
+![Notification Sidebar Footer](localchat-notification.png)
+
 ## v1.0.0 离线预览与长文本验证
 
 日期：2026-10-02，macOS。Sidebar、Header、消息布局、Composer 主结构、依赖和两个 GitHub Actions 工作流保持本轮修改前的版本。

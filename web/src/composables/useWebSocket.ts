@@ -1,5 +1,6 @@
 import { onBeforeUnmount, ref, watch, type Ref } from "vue";
 import type { ConnectionState, Device, Message } from "../types/message";
+import { useNotification } from "./useNotification";
 import { HARD_LONG_TEXT_LIMIT } from "../presentation/longText";
 
 export const MAX_MESSAGE_SIZE = HARD_LONG_TEXT_LIMIT;
@@ -10,6 +11,7 @@ export function useWebSocket(username: Ref<string>) {
   const state = ref<ConnectionState>("disconnected");
   const clientId = ref("");
   const ownIds = ref(new Set<string>());
+  const notification = useNotification(ownIds);
   const ip = ref("");
   const error = ref("");
   let socket: WebSocket | undefined;
@@ -50,6 +52,7 @@ export function useWebSocket(username: Ref<string>) {
           error.value = message.content || "Unable to send message.";
         } else if (["text", "file", "system"].includes(message.type)) {
           messages.value.push(message);
+          notification.notifyIncomingMessage(message);
         }
       } catch {
         error.value = "The server sent an invalid message.";
@@ -99,5 +102,16 @@ export function useWebSocket(username: Ref<string>) {
     clearTimeout(reconnectTimer);
     socket?.close();
   });
-  return { messages, devices, state, clientId, ownIds, ip, error, sendText };
+  return {
+    messages,
+    devices,
+    state,
+    clientId,
+    ownIds,
+    ip,
+    error,
+    sendText,
+    soundEnabled: notification.soundEnabled,
+    setSoundEnabled: notification.setSoundEnabled,
+  };
 }

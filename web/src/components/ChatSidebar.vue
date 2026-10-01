@@ -7,12 +7,17 @@ const props = defineProps<{
   devices: Device[];
   version: string;
   infoLoading: boolean;
+  soundEnabled: boolean;
   clientId: string;
   state: ConnectionState;
   mobile: boolean;
   open: boolean;
 }>();
-const emit = defineEmits<{ close: []; rename: [] }>();
+const emit = defineEmits<{
+  close: [];
+  rename: [];
+  sound: [enabled: boolean];
+}>();
 const panel = ref<HTMLElement>();
 const closeButton = ref<HTMLButtonElement>();
 const server = location.host;
@@ -157,6 +162,38 @@ function trapFocus(event: KeyboardEvent) {
     </section>
 
     <div class="sidebar-footer">
+      <button
+        class="sidebar-sound"
+        type="button"
+        aria-label="Message sound"
+        :aria-pressed="soundEnabled"
+        @click="emit('sound', !soundEnabled)"
+      >
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path
+            d="M4 7h3l4-3v12l-4-3H4V7Z"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linejoin="round"
+          />
+          <path
+            v-if="soundEnabled"
+            d="M14 6a6 6 0 0 1 0 8"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linecap="round"
+          />
+          <path
+            v-else
+            d="m14 8 4 4m0-4-4 4"
+            stroke="currentColor"
+            stroke-width="1.3"
+            stroke-linecap="round"
+          />
+        </svg>
+        <span>Message sound</span
+        ><span class="sound-state">{{ soundEnabled ? "On" : "Off" }}</span>
+      </button>
       <div class="sidebar-server">
         <span>Server</span><span class="server-address">{{ server }}</span>
       </div>

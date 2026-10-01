@@ -8,16 +8,16 @@ A lightweight local network chat and temporary file transfer tool.
 
 ## 使用
 
-从 [GitHub Releases](https://github.com/YEXIAONAN/LocalChat/releases) 下载当前服务器设备对应的压缩包。下列名称以 `v1.0.0` 为例，实际版本取决于发布 Tag：
+从 [GitHub Releases](https://github.com/YEXIAONAN/LocalChat/releases) 下载当前服务器设备对应的压缩包。下列名称以 `v1.1.0` 为例，实际版本取决于发布 Tag：
 
 | 平台 | Release 压缩包 | 解压后的程序 |
 | --- | --- | --- |
-| Windows x64 | `localchat-v1.0.0-windows-amd64.zip` | `localchat.exe` |
-| Windows ARM64 | `localchat-v1.0.0-windows-arm64.zip` | `localchat.exe` |
-| Linux x64 | `localchat-v1.0.0-linux-amd64.tar.gz` | `localchat` |
-| Linux ARM64 | `localchat-v1.0.0-linux-arm64.tar.gz` | `localchat` |
-| macOS Intel | `localchat-v1.0.0-darwin-amd64.tar.gz` | `localchat` |
-| macOS Apple Silicon | `localchat-v1.0.0-darwin-arm64.tar.gz` | `localchat` |
+| Windows x64 | `localchat-v1.1.0-windows-amd64.zip` | `localchat.exe` |
+| Windows ARM64 | `localchat-v1.1.0-windows-arm64.zip` | `localchat.exe` |
+| Linux x64 | `localchat-v1.1.0-linux-amd64.tar.gz` | `localchat` |
+| Linux ARM64 | `localchat-v1.1.0-linux-arm64.tar.gz` | `localchat` |
+| macOS Intel | `localchat-v1.1.0-darwin-amd64.tar.gz` | `localchat` |
+| macOS Apple Silicon | `localchat-v1.1.0-darwin-arm64.tar.gz` | `localchat` |
 
 Windows 双击解压后的 `.exe`，或在终端运行。Linux/macOS 的压缩包保留执行权限：
 
@@ -52,6 +52,14 @@ LAN
 ./localchat -addr 127.0.0.1:8787      # 仅本机访问
 ./localchat -h
 ```
+
+## 消息提醒
+
+页面仍打开且 `document.visibilityState` 不为 `visible` 时，其他连接发送的文字或完成上传的文件会增加未读数：标题显示 `(1) LocalChat`，超过 99 显示 `(99+) LocalChat`，原 favicon 右上角显示红点。重新可见立即清零，不弹 Toast。前台消息、自己的回显、系统/连接/在线设备事件以及上传分片和进度均不提醒。
+
+Sidebar Footer 的 **Message sound · On / Off** 只控制声音，默认开启；仅该偏好保存到 `localStorage` 的 `localchat.notification.sound`。未读数属于本页生命周期，刷新清零。声音由 Web Audio 生成约 280ms 的轻量双音，400ms 内的密集消息合并声音，未读数仍逐条累计。首次点击或键盘交互尝试解锁音频；浏览器不支持或阻止音频时，聊天及标题/favicon 提醒继续正常。
+
+以 Page Visibility 为准：有些浏览器在切到 IDE 后仍将露出的页面视为可见，此时保持静默。后台标签被浏览器冻结、休眠或丢弃时，消息处理可能延迟；关闭页面后不再接收。此功能不使用系统通知权限、Service Worker、Push API、HTTPS 或外部服务。
 
 ## 一键启动与端口配置
 
@@ -178,11 +186,11 @@ go build -trimpath -o localchat.exe ./cmd/localchat
 
 ```sh
 CGO_ENABLED=0 go build -trimpath \
-  -ldflags "-X localchat/internal/buildinfo.Version=v1.0.0" \
+  -ldflags "-X localchat/internal/buildinfo.Version=v1.1.0" \
   -o localchat ./cmd/localchat
 ```
 
-启动横幅会显示 `LocalChat v1.0.0`。`GET /api/info` 返回 `name: "LocalChat"` 与同一个 `version: "v1.0.0"`，并保留局域网地址、文件/消息限制等现有字段。开发构建则显示 `dev`。
+启动横幅会显示 `LocalChat v1.1.0`。`GET /api/info` 返回 `name: "LocalChat"` 与同一个 `version: "v1.1.0"`，并保留局域网地址、文件/消息限制等现有字段。开发构建则显示 `dev`。
 
 GitHub 链接已根据当前 `origin` 配置在 [web/src/config.ts](web/src/config.ts)。迁移或 fork 项目时，可修改该文件中的 `REPOSITORY_URL`，并更新本 README 的 CI Badge 地址。
 
@@ -201,13 +209,13 @@ GitHub 链接已根据当前 `origin` 配置在 [web/src/config.ts](web/src/conf
 
 [release.yml](.github/workflows/release.yml) 仅监听 **push Tag `v*.*.*`**，并要求正式版本格式 `vX.Y.Z`。使用 `contents: write` 权限创建 Release，无其他写权限，也没有分支 push 或手动 dispatch 触发器。
 
-发布下一个版本，例如 `v1.1.0`：
+发布下一个版本，例如 `v1.2.0`：
 
 ```sh
 git checkout main
 git pull --ff-only
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.2.0
+git push origin v1.2.0
 ```
 
 GitHub Actions 自动重新运行前端安装、测试与构建，然后配置 Go、运行 Go test / vet，再使用 `CGO_ENABLED=0` 编译六个平台。`github.ref_name` 自动传给 `VERSION`，通过 ldflags 注入所有二进制，不需要手动改版本文件。
@@ -230,7 +238,7 @@ macOS/Linux 的本地发布脚本使用 Go、Node/npm 和系统 `zip`、`tar`、
 
 ```sh
 ./scripts/build-release.sh                 # 默认 dev，完整检查 + 六平台编译/打包
-VERSION=v1.1.0 ./scripts/build-release.sh   # 仅本地生成带版本的产物
+VERSION=v1.2.0 ./scripts/build-release.sh   # 仅本地生成带版本的产物
 ```
 
 输出位于忽略的 `release/` 中。已有平台名称的裸二进制继续供 `start/` 使用；发布压缩包采用上述版本化名称。`build-binaries.sh` 与 `package-release.sh` 是工作流内部步骤，本地通常使用完整的 `build-release.sh`。后者要求二进制构建版本与打包版本相同，防止把 dev 程序标为正式版本。

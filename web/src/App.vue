@@ -17,8 +17,17 @@ import { useAppInfo } from "./composables/useAppInfo";
 
 const { username, dialogOpen, save } = useUsername();
 const { version, loading: infoLoading } = useAppInfo();
-const { messages, devices, state, ownIds, clientId, error, sendText } =
-  useWebSocket(username);
+const {
+  messages,
+  devices,
+  state,
+  ownIds,
+  clientId,
+  error,
+  sendText,
+  soundEnabled,
+  setSoundEnabled,
+} = useWebSocket(username);
 const {
   uploads,
   error: uploadError,
@@ -82,6 +91,8 @@ async function queueTextFile(file: File): Promise<boolean> {
       :devices="devices"
       :version="version"
       :info-loading="infoLoading"
+      :sound-enabled="soundEnabled"
+      @sound="setSoundEnabled"
       :client-id="clientId"
       :state="state"
       :mobile="mobile"

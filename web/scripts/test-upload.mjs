@@ -50,6 +50,37 @@ try {
     );
     featureModules[name] = pathToFileURL(path).href;
   }
+  const notificationPath = `${directory}/useNotification.mjs`;
+  const notificationSource = await readFile(
+    new URL("../src/composables/useNotification.ts", import.meta.url),
+    "utf8",
+  );
+  await writeFile(
+    notificationPath,
+    ts.transpileModule(notificationSource, {
+      compilerOptions: {
+        target: ts.ScriptTarget.ES2022,
+        module: ts.ModuleKind.ESNext,
+      },
+    }).outputText,
+  );
+  const websocketPath = `${directory}/useWebSocket.mjs`;
+  const websocketSource = await readFile(
+    new URL("../src/composables/useWebSocket.ts", import.meta.url),
+    "utf8",
+  );
+  await writeFile(
+    websocketPath,
+    ts
+      .transpileModule(websocketSource, {
+        compilerOptions: {
+          target: ts.ScriptTarget.ES2022,
+          module: ts.ModuleKind.ESNext,
+        },
+      })
+      .outputText.replace('"./useNotification"', '"./useNotification.mjs"')
+      .replace('"../presentation/longText"', '"./longText.mjs"'),
+  );
   const result = spawnSync(
     process.execPath,
     [
@@ -57,11 +88,14 @@ try {
       fileURLToPath(new URL("../tests/upload.test.mjs", import.meta.url)),
       fileURLToPath(new URL("../tests/presentation.test.mjs", import.meta.url)),
       fileURLToPath(new URL("../tests/long-text.test.mjs", import.meta.url)),
+      fileURLToPath(new URL("../tests/notification.test.mjs", import.meta.url)),
     ],
     {
       stdio: "inherit",
       env: {
         ...process.env,
+        LOCALCHAT_NOTIFICATION_MODULE: pathToFileURL(notificationPath).href,
+        LOCALCHAT_WEBSOCKET_MODULE: pathToFileURL(websocketPath).href,
         LOCALCHAT_UPLOAD_MODULE: pathToFileURL(modulePath).href,
         LOCALCHAT_PRESENTATION_MODULE: pathToFileURL(presentationPath).href,
         LOCALCHAT_LONG_TEXT_MODULE: featureModules.longText,
