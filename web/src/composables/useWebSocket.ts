@@ -1,7 +1,8 @@
 import { onBeforeUnmount, ref, watch, type Ref } from "vue";
 import type { ConnectionState, Device, Message } from "../types/message";
+import { HARD_LONG_TEXT_LIMIT } from "../presentation/longText";
 
-export const MAX_MESSAGE_SIZE = 2 * 1024 * 1024;
+export const MAX_MESSAGE_SIZE = HARD_LONG_TEXT_LIMIT;
 
 export function useWebSocket(username: Ref<string>) {
   const messages = ref<Message[]>([]);

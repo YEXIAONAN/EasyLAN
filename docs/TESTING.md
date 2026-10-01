@@ -2,6 +2,24 @@
 
 日期：2026-10-01。执行环境为 macOS；浏览器客户端在同一台机器上分别使用 `127.0.0.1` 与 `localhost`。以下记录区分真实浏览器/HTTP 测试与网络故障模拟，不把跨平台编译当作异系统实机验证。
 
+## v1.0.0 离线预览与长文本验证
+
+日期：2026-10-02，macOS。Sidebar、Header、消息布局、Composer 主结构、依赖和两个 GitHub Actions 工作流保持本轮修改前的版本。
+
+- `npm ci`、17 项前端测试、`npm run build`、`go test ./...`、`go test -race ./...`、`go vet ./...`、`go build ./cmd/localchat` 通过。原有队列、16 MiB 分片、四并发、Pause / Resume / Retry / Cancel、下载与清理测试均保留。
+- 后端真实 HTTP 测试覆盖 TXT、LOG、JSON、Go、HTML / HTM、ENV、Dockerfile、Makefile、空文本、无效 UTF-8、PNG、PDF，以及伪装文件、二进制文本、SVG、ZIP、EXE、DOCX。预览 metadata 与响应类型一致，下载字节及 attachment 行为不变，原生媒体 HEAD / Range 正常。
+- 780 MiB 稀疏日志走实际磁盘/HTTP 路径，返回前 524,288 字节；Range 不能绕过上限。HEAD 预览长度为 512 KiB，Download HEAD 仍为完整大小。该请求 Go 堆累计分配预算小于 32 MiB，避免完整读取 780 MiB 后再截断的回归。稀疏 fixture 不代表再次完成 780 MiB 的真实浏览器上传。
+- WebSocket 覆盖恰好 128 KiB UTF-8 内容、最坏 JSON 转义，以及超过边界拒绝。前端覆盖 64 / 128 KiB 精确边界、中文和 emoji 字节数、短代码保持消息、生成 TXT 的时间戳和逐字节内容。
+- 真实浏览器选择并上传 TXT、LOG、JSON、Go、PNG、PDF、HTML、ZIP、SVG 与超过 512 KiB 的日志。文本以 monospace 显示；HTML 只有源码，无 script 节点、无标题修改；ZIP / SVG 不显示 Preview。日志 Dialog 只有 524,288 个 ASCII 字符并显示截断提示。
+- PNG 原生预览尺寸为 800 × 400，不撑破 Dialog；Copy 成功。PDF 的响应为 inline / application/pdf，Dialog 使用原生新标签页入口，不引入解析器。当前内置浏览器无法显示嵌入 PDF，因此保留明确说明与 Download fallback；未将其计为 PDF 页面渲染通过。
+- 10 KiB 走普通消息；80 KiB 显示 Message / TXT 两个选择，并分别验证；200 KiB 自动上传 TXT，清空输入，预览长度正确，下载与原始文本逐字节一致。
+- 在独立测试服务的临时目录注入不可写故障：TXT 初始化失败后 200 KiB 原文仍在 Composer、File 保留并出现 Retry。恢复权限后 Retry 上传成功，原文仍保留供用户处理；没有读取或改变用户文件。
+- 实际重启独立测试服务后，旧文件 Preview 显示 File is no longer available，Download 显示过期提示，没有空白错误 Dialog。
+- 390 × 844 Smoke Test：预览 Dialog 宽 390、高 844，长文本提示和文件卡片无横向溢出，关闭与 TXT 发送正常；测试后恢复视口。
+- `VERSION=v1.0.0 ./scripts/build-release.sh` 完成六平台编译与打包；名称、仅单个程序内容、Unix 执行权限、六项 SHA-256 和实际 Sidebar / API 的 v1.0.0 版本验证通过。跨平台实机与浏览器 PDF 能力仍取决于对应设备。
+
+![LocalChat 离线预览](localchat-preview.png)
+
 ## UI Polish、CI 与 Release 验证
 
 本轮只调整侧栏底部与 Composer 宽度，保留消息布局、配色、WebSocket 和文件传输实现。

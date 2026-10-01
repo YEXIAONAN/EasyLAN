@@ -4,6 +4,7 @@ import { ref } from "vue";
 const { useUpload, CHUNK_SIZE, MAX_CONCURRENT_UPLOADS } = await import(
   process.env.LOCALCHAT_UPLOAD_MODULE
 );
+const { createTextFile } = await import(process.env.LOCALCHAT_LONG_TEXT_MODULE);
 const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
 async function until(condition) {
   const started = Date.now();
@@ -209,4 +210,59 @@ test("pause also stops automatic retries of a failed in-flight chunk", async () 
     network.calls.filter((call) => call.url.endsWith("/chunks/2")).length,
     1,
   );
+});
+
+test("generated long TXT uses existing chunks and becomes ready only after session creation", async () => {
+  const network = fakeNetwork({ delay: 30 });
+  const upload = create();
+  const source = "中文😀\n".repeat(25000);
+  const file = createTextFile(source);
+  const [item] = upload.addFiles([file]);
+  assert.equal(await upload.waitForSession(item), true);
+  assert.notEqual(item.fileId, "");
+  assert.equal(item.file, file);
+  assert.equal(await item.file.text(), source);
+  await until(() => item.status === "completed");
+  const init = JSON.parse(
+    network.calls.find((call) => call.method === "POST").body,
+  );
+  assert.equal(init.size, new TextEncoder().encode(source).byteLength);
+  assert.equal(init.chunkSize, CHUNK_SIZE);
+  assert.equal(network.broadcasts, 1);
+});
+
+test("failed initialization resolves false and retains generated File for Retry", async () => {
+  let failInit = true;
+  const network = fakeNetwork();
+  const request = globalThis.fetch;
+  globalThis.fetch = (url, options) =>
+    url === "/api/files" && failInit
+      ? Promise.resolve(
+          Response.json({ error: "Init unavailable" }, { status: 503 }),
+        )
+      : request(url, options);
+  const upload = create();
+  const file = createTextFile("a".repeat(200 * 1024));
+  const [item] = upload.addFiles([file]);
+  assert.equal(await upload.waitForSession(item), false);
+  assert.equal(item.status, "failed");
+  assert.equal(item.file, file);
+  failInit = false;
+  upload.resume(item);
+  await until(() => item.status === "completed");
+  assert.equal(network.broadcasts, 1);
+});
+
+test("TXT waiting in queue can be cancelled without clearing a waiting draft", async () => {
+  fakeNetwork({ delay: 30 });
+  const upload = create();
+  const [first, second] = upload.addFiles([
+    file("first.zip", CHUNK_SIZE * 2),
+    createTextFile("待发送"),
+  ]);
+  const ready = upload.waitForSession(second);
+  await upload.cancel(second);
+  assert.equal(await ready, false);
+  assert.equal(second.status, "cancelled");
+  await until(() => first.status === "completed");
 });

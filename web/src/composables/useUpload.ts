@@ -17,6 +17,8 @@ class RequestError extends Error {
   }
 }
 interface Runtime {
+  sessionReady: Promise<boolean>;
+  resolveSession: (ready: boolean) => void;
   done: Set<number>;
   pending: Set<number>;
   controllers: Set<AbortController>;
@@ -67,9 +69,10 @@ export function useUpload(username: Ref<string>, clientId: Ref<string>) {
   }
 
   function addFiles(files: File[]) {
-    if (!username.value) {
+    const accepted: Upload[] = [];
+    if (!username.value || disposed) {
       error.value = "Choose your name before sending a file.";
-      return;
+      return accepted;
     }
     for (const file of files) {
       if (file.size > MAX_FILE_SIZE) {
@@ -88,7 +91,14 @@ export function useUpload(username: Ref<string>, clientId: Ref<string>) {
         status: "queued",
         error: "",
       });
+      accepted.push(uploads.value[uploads.value.length - 1]);
+      let resolveSession!: (ready: boolean) => void;
+      const sessionReady = new Promise<boolean>((resolve) => {
+        resolveSession = resolve;
+      });
       runtimes.set(key, {
+        sessionReady,
+        resolveSession,
         done: new Set(),
         pending: new Set(),
         controllers: new Set(),
@@ -98,6 +108,13 @@ export function useUpload(username: Ref<string>, clientId: Ref<string>) {
       });
     }
     pump();
+    return accepted;
+  }
+
+  // Long text keeps the draft until the existing upload flow has a server
+  // session. Rejected initialization leaves both the draft and retryable File.
+  function waitForSession(upload: Upload): Promise<boolean> {
+    return runtimes.get(upload.key)?.sessionReady || Promise.resolve(false);
   }
 
   function pump() {
@@ -167,7 +184,12 @@ export function useUpload(username: Ref<string>, clientId: Ref<string>) {
           },
           false,
         );
+        if (typeof result?.fileId !== "string" || !result.fileId)
+          throw new Error(
+            "Could not create upload session. Retry to send this file.",
+          );
         upload.fileId = result.fileId;
+        runtime.resolveSession(!runtime.cancelRequested && !disposed);
       }
       started = performance.now();
       async function worker() {
@@ -236,6 +258,7 @@ export function useUpload(username: Ref<string>, clientId: Ref<string>) {
       });
       upload.status = "completed";
     } catch (err) {
+      if (!upload.fileId) runtime.resolveSession(false);
       if (!runtime.cancelRequested) {
         upload.status = "failed";
         upload.error = describe(err);
@@ -278,6 +301,7 @@ export function useUpload(username: Ref<string>, clientId: Ref<string>) {
       return;
     const runtime = runtimes.get(upload.key)!;
     runtime.cancelRequested = true;
+    runtime.resolveSession(false);
     upload.status = "cancelling";
     upload.error = "";
     runtime.controllers.forEach((controller) => controller.abort());
@@ -305,11 +329,21 @@ export function useUpload(username: Ref<string>, clientId: Ref<string>) {
     onBeforeUnmount(() => {
       disposed = true;
       runtimes.forEach((runtime) => {
+        runtime.resolveSession(false);
         runtime.cancelRequested = true;
         runtime.controllers.forEach((controller) => controller.abort());
       });
     });
-  return { uploads, error, addFiles, pause, resume, cancel, dismiss };
+  return {
+    uploads,
+    error,
+    addFiles,
+    waitForSession,
+    pause,
+    resume,
+    cancel,
+    dismiss,
+  };
 }
 
 function describe(error: unknown) {

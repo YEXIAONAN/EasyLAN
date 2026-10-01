@@ -85,7 +85,9 @@ func cleanName(name string) string {
 		}
 		return r
 	}, name)
-	name = strings.Trim(name, " .")
+	// Preserve leading dots (.env); only trailing dots/spaces are problematic
+	// download filenames. Disk paths still use a generated session ID.
+	name = strings.TrimRight(strings.Trim(name, " "), " .")
 	for len(name) > 240 {
 		_, size := utf8.DecodeLastRuneInString(name)
 		name = name[:len(name)-size]

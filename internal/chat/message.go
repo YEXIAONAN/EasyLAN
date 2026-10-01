@@ -8,12 +8,13 @@ import (
 	"unicode/utf8"
 )
 
-const MaxMessageBytes = 2 * 1024 * 1024
+const MaxMessageBytes = 128 * 1024
 
 type File struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Size int64  `json:"size"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Size        int64  `json:"size"`
+	PreviewType string `json:"previewType"`
 }
 
 type Device struct {

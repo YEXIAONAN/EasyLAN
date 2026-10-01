@@ -2,6 +2,7 @@ export interface FileInfo {
   id: string;
   name: string;
   size: number;
+  previewType?: "text" | "image" | "pdf" | "none";
 }
 export interface Device {
   id: string;

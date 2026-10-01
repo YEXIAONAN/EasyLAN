@@ -1227,3 +1227,127 @@ a,
     transition: none !important;
   }
 }
+
+/* Local file preview and byte-size prompt; the existing chat layout is unchanged. */
+.file-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.file-actions.with-preview {
+  flex-basis: 100%;
+  padding-left: 36px;
+}
+.long-text-prompt {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.long-text-prompt .text-button {
+  color: var(--green-hover);
+}
+.composer-notice {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.preview-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #1c211e55;
+}
+.preview-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(900px, 100%);
+  max-height: 90dvh;
+  min-height: 200px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 52px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.preview-header h2 {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+.preview-header .icon-button {
+  width: 28px;
+  height: 28px;
+  font-size: 22px;
+}
+.preview-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+}
+.preview-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.65;
+}
+.preview-limit,
+.preview-status {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+.preview-image {
+  display: block;
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  margin-inline: auto;
+}
+.pdf-hint {
+  margin-top: 16px;
+}
+.preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+@media (max-width: 767px) {
+  .preview-backdrop {
+    padding: 0;
+  }
+  .preview-dialog {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+  .preview-body {
+    flex: 1;
+  }
+  .preview-footer {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}

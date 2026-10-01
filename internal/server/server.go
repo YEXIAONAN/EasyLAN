@@ -32,6 +32,7 @@ func New() (*Server, error) {
 	mux.HandleFunc("POST /api/files/{id}/complete", s.Files.Complete)
 	mux.HandleFunc("DELETE /api/files/{id}", s.Files.Cancel)
 	mux.HandleFunc("GET /api/files/{id}", s.Files.Download)
+	mux.HandleFunc("GET /api/files/{id}/preview", s.Files.Preview)
 	mux.HandleFunc("GET /api/info", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"name": buildinfo.Name, "version": buildinfo.Version, "lanAddresses": network.LANAddresses(), "maxMessageSize": chat.MaxMessageBytes, "maxFileSize": transfer.MaxFileSize, "chunkSize": transfer.ChunkSize})

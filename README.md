@@ -8,16 +8,16 @@ A lightweight local network chat and temporary file transfer tool.
 
 ## 使用
 
-从 [GitHub Releases](https://github.com/YEXIAONAN/LocalChat/releases) 下载当前服务器设备对应的压缩包。下列名称以 `v0.2.0` 为例，实际版本取决于发布 Tag：
+从 [GitHub Releases](https://github.com/YEXIAONAN/LocalChat/releases) 下载当前服务器设备对应的压缩包。下列名称以 `v1.0.0` 为例，实际版本取决于发布 Tag：
 
 | 平台 | Release 压缩包 | 解压后的程序 |
 | --- | --- | --- |
-| Windows x64 | `localchat-v0.2.0-windows-amd64.zip` | `localchat.exe` |
-| Windows ARM64 | `localchat-v0.2.0-windows-arm64.zip` | `localchat.exe` |
-| Linux x64 | `localchat-v0.2.0-linux-amd64.tar.gz` | `localchat` |
-| Linux ARM64 | `localchat-v0.2.0-linux-arm64.tar.gz` | `localchat` |
-| macOS Intel | `localchat-v0.2.0-darwin-amd64.tar.gz` | `localchat` |
-| macOS Apple Silicon | `localchat-v0.2.0-darwin-arm64.tar.gz` | `localchat` |
+| Windows x64 | `localchat-v1.0.0-windows-amd64.zip` | `localchat.exe` |
+| Windows ARM64 | `localchat-v1.0.0-windows-arm64.zip` | `localchat.exe` |
+| Linux x64 | `localchat-v1.0.0-linux-amd64.tar.gz` | `localchat` |
+| Linux ARM64 | `localchat-v1.0.0-linux-arm64.tar.gz` | `localchat` |
+| macOS Intel | `localchat-v1.0.0-darwin-amd64.tar.gz` | `localchat` |
+| macOS Apple Silicon | `localchat-v1.0.0-darwin-arm64.tar.gz` | `localchat` |
 
 Windows 双击解压后的 `.exe`，或在终端运行。Linux/macOS 的压缩包保留执行权限：
 
@@ -96,7 +96,7 @@ LOCALCHAT_PORT=9000 ./start/linux.sh
 - 桌面采用浅色 230px 侧栏，消息流最大 960px；手机使用抽屉侧栏和全屏布局。
 - 连续消息按连接身份及两分钟内的相邻时间分组。他人的头像/姓名/IP/时间每组显示一次；自己的消息右对齐，不显示头像与身份信息。
 - 普通多行文字使用系统 UI 字体。Markdown 围栏代码、JSON 和可识别源码/配置使用独立代码区；无法自动识别的代码可加三个反引号围栏。
-- 单条文字内容最大 **2 MiB**（按 UTF-8 字节），支持长文本、换行、折叠与复制。JSON 转义后的 WebSocket 帧另设有限上限。
+- 普通文字按 UTF-8 字节计算：≤ **64 KiB** 直接发送，64–128 KiB 提供 Message / TXT 选择，> **128 KiB** 自动转成 TXT。短代码不受类型识别影响；普通 WebSocket 内容上限为 128 KiB，转义后的帧上限为该值 × 6 + 4 KiB。
 - 单文件最大 **1 GiB**（界面标为 1 GB），固定 **16 MiB** 分片，全页面最多 **4** 个同时传输的分片。多个文件依次排队；暂停当前文件后，队列可继续处理其他文件。
 - 进度按成功分片计算；速度为当前有效上传时段的平均值，不包含暂停等待时间。每片最多自动重试 3 次；手动重试保留成功分片。
 - Pause 停止提交新分片，正在上传的分片会自然结束；Resume 继续剩余分片。Cancel 中止传输并删除对应临时上传。
@@ -107,6 +107,20 @@ LOCALCHAT_PORT=9000 ./start/linux.sh
 - `Ctrl+C` / SIGTERM 会清理文件；强制结束进程、断电或系统崩溃无法保证清理，可由系统临时目录清理机制处理。
 
 无登录、无私聊、无历史同步、无永久文件管理。在线数量按浏览器 WebSocket 连接计算，同一设备的多个页面分别计数。
+
+## 离线文件预览与长文本
+
+文件卡片在后端确认支持时显示 **Preview**，Download 保持独立。所有内容来自当前 LocalChat Server，没有云端服务、CDN 或解析器依赖。
+
+- **文本**：TXT / LOG / MD、JSON / XML / YAML / YML / TOML / INI / CONF / CFG / ENV，以及 Go / Java / Python / JS / TS / Vue / C / H / C++ / HPP / C# / SH / Bash / Zsh / SQL / CSS、Dockerfile、Makefile。
+- **HTML / HTM**：只显示源码文字，始终返回 `text/plain; charset=utf-8`，通过 Vue 文本插值放入 `<pre>`，不执行 HTML、脚本或事件属性。
+- **图片**：PNG / JPG / JPEG / WebP / GIF，扩展名须与服务端探测到的文件签名相符；从 HTTP 流式加载，由浏览器原生显示。
+- **PDF**：扩展名和 PDF 签名通过检查后，以 `application/pdf`、`inline` 返回。Dialog 提供 **Open PDF preview**，在新标签页使用浏览器原生查看器；不支持 PDF 的浏览器可下载后本地打开。
+- **仅下载**：SVG、压缩包、磁盘镜像、安装包、Office 文件及所有未列入 allowlist 的类型。伪装成图片/PDF 的 HTML 或明显二进制文本也不开放预览。
+
+文本只流式读取前 **512 KiB**，不加载完整文件；较大的日志会显示截断提示及 Download full file。默认 UTF-8，浏览器对无效序列使用 replacement character。Copy 不可用时给出提示，仍可手工选中文本；预览失败或文件过期时保留清晰错误与下载入口。文件仍随当前服务会话退出而清理。
+
+长文本只根据字节大小处理，不依据代码/JSON 检测。TXT 名称为 `message-YYYYMMDD-HHmmss.txt`，使用 Blob → File，然后复用现有 16 MiB 分片上传、队列、Retry / Pause / Resume / Cancel、文件消息、预览和下载。成功创建上传会话后才清空原始输入；创建文件或会话失败会保留输入，失败的上传仍保留 File 供 Retry。没有新增长消息 API、WebSocket 文件协议或永久存储。
 
 ## 网络与防火墙
 
@@ -164,11 +178,11 @@ go build -trimpath -o localchat.exe ./cmd/localchat
 
 ```sh
 CGO_ENABLED=0 go build -trimpath \
-  -ldflags "-X localchat/internal/buildinfo.Version=v0.2.0" \
+  -ldflags "-X localchat/internal/buildinfo.Version=v1.0.0" \
   -o localchat ./cmd/localchat
 ```
 
-启动横幅会显示 `LocalChat v0.2.0`。`GET /api/info` 返回 `name: "LocalChat"` 与同一个 `version: "v0.2.0"`，并保留局域网地址、文件/消息限制等现有字段。开发构建则显示 `dev`。
+启动横幅会显示 `LocalChat v1.0.0`。`GET /api/info` 返回 `name: "LocalChat"` 与同一个 `version: "v1.0.0"`，并保留局域网地址、文件/消息限制等现有字段。开发构建则显示 `dev`。
 
 GitHub 链接已根据当前 `origin` 配置在 [web/src/config.ts](web/src/config.ts)。迁移或 fork 项目时，可修改该文件中的 `REPOSITORY_URL`，并更新本 README 的 CI Badge 地址。
 
@@ -187,13 +201,13 @@ GitHub 链接已根据当前 `origin` 配置在 [web/src/config.ts](web/src/conf
 
 [release.yml](.github/workflows/release.yml) 仅监听 **push Tag `v*.*.*`**，并要求正式版本格式 `vX.Y.Z`。使用 `contents: write` 权限创建 Release，无其他写权限，也没有分支 push 或手动 dispatch 触发器。
 
-发布下一个版本，例如 `v0.2.0`：
+发布下一个版本，例如 `v1.1.0`：
 
 ```sh
 git checkout main
 git pull --ff-only
-git tag v0.2.0
-git push origin v0.2.0
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 GitHub Actions 自动重新运行前端安装、测试与构建，然后配置 Go、运行 Go test / vet，再使用 `CGO_ENABLED=0` 编译六个平台。`github.ref_name` 自动传给 `VERSION`，通过 ldflags 注入所有二进制，不需要手动改版本文件。
@@ -216,7 +230,7 @@ macOS/Linux 的本地发布脚本使用 Go、Node/npm 和系统 `zip`、`tar`、
 
 ```sh
 ./scripts/build-release.sh                 # 默认 dev，完整检查 + 六平台编译/打包
-VERSION=v0.2.0 ./scripts/build-release.sh   # 仅本地生成带版本的产物
+VERSION=v1.1.0 ./scripts/build-release.sh   # 仅本地生成带版本的产物
 ```
 
 输出位于忽略的 `release/` 中。已有平台名称的裸二进制继续供 `start/` 使用；发布压缩包采用上述版本化名称。`build-binaries.sh` 与 `package-release.sh` 是工作流内部步骤，本地通常使用完整的 `build-release.sh`。后者要求二进制构建版本与打包版本相同，防止把 dev 程序标为正式版本。
@@ -247,7 +261,9 @@ scripts/            校验、六平台编译与打包（本地不发布）
 - `PUT /api/files/{id}/chunks/{index}`：从 0 开始的索引，直接发送 `application/octet-stream` 二进制。
 - `POST /api/files/{id}/complete`：校验、合并并广播 `file` 消息。
 - `DELETE /api/files/{id}`：取消未完成的上传。
-- `GET /api/files/{id}`：下载当前会话中已完成的文件。
+- `GET /api/files/{id}`：下载当前会话中已完成的文件（attachment、HEAD、Range 保持原样）。
+- `GET /api/files/{id}/preview`：根据服务器 allowlist / 签名提供 text、image、pdf 预览；文本最多 512 KiB，包含 `X-Preview-Type`、`X-Preview-Truncated` 和 `X-Preview-Max-Bytes`。不支持返回 415，过期返回 404。
+- 完成上传的 File metadata 增加 `previewType: "text" | "image" | "pdf" | "none"`，前端统一依据该值决定 Preview 支持。
 - `GET /api/info`：产品名称、Go 二进制版本、局域网地址和大小限制。
 
 所有文件和聊天操作均无需登录。HTTP 文件接口的 username/clientId 仅作为展示 metadata，不能作为身份认证；客户端提交的 IP 不被信任。

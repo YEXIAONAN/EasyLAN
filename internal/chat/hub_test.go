@@ -62,6 +62,23 @@ func TestChatBroadcastAndIdentity(t *testing.T) {
 	}
 	a.WriteMessage(websocket.TextMessage, []byte("{invalid"))
 	readType(t, a, "error")
+	boundary := strings.Repeat("中", MaxMessageBytes/3) + strings.Repeat("a", MaxMessageBytes%3)
+	if err := a.WriteJSON(map[string]string{"type": "text", "content": boundary}); err != nil {
+		t.Fatal(err)
+	}
+	for _, conn := range []*websocket.Conn{a, b} {
+		if readType(t, conn, "text").Content != boundary {
+			t.Fatal("UTF-8 message at 128 KiB boundary was lost")
+		}
+	}
+	// JSON escapes can expand to six wire bytes per content byte. The bounded
+	// envelope must still accept a valid message at the exact content limit.
+	if err := a.WriteJSON(map[string]string{"type": "text", "content": strings.Repeat("\x00", MaxMessageBytes)}); err != nil {
+		t.Fatal(err)
+	}
+	for _, conn := range []*websocket.Conn{a, b} {
+		readType(t, conn, "text")
+	}
 	a.WriteJSON(map[string]string{"type": "text", "content": strings.Repeat("a", MaxMessageBytes+1)})
 	readType(t, a, "error")
 	// A newly joined browser must never receive earlier messages.

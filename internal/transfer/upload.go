@@ -203,6 +203,7 @@ func (m *Manager) Complete(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, "Could not finish upload.")
 		return
 	}
+	s.file.PreviewType = previewType(filepath.Join(s.dir, "file"), s.file.Name)
 	s.complete = true
 	for i := 0; i < s.chunks; i++ {
 		os.Remove(filepath.Join(s.dir, fmt.Sprintf("%d.part", i)))

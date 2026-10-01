@@ -32,12 +32,31 @@ try {
       },
     }).outputText,
   );
+  const featureModules = {};
+  for (const name of ["longText", "preview"]) {
+    const source = await readFile(
+      new URL(`../src/presentation/${name}.ts`, import.meta.url),
+      "utf8",
+    );
+    const path = `${directory}/${name}.mjs`;
+    await writeFile(
+      path,
+      ts.transpileModule(source, {
+        compilerOptions: {
+          target: ts.ScriptTarget.ES2022,
+          module: ts.ModuleKind.ESNext,
+        },
+      }).outputText,
+    );
+    featureModules[name] = pathToFileURL(path).href;
+  }
   const result = spawnSync(
     process.execPath,
     [
       "--test",
       fileURLToPath(new URL("../tests/upload.test.mjs", import.meta.url)),
       fileURLToPath(new URL("../tests/presentation.test.mjs", import.meta.url)),
+      fileURLToPath(new URL("../tests/long-text.test.mjs", import.meta.url)),
     ],
     {
       stdio: "inherit",
@@ -45,6 +64,8 @@ try {
         ...process.env,
         LOCALCHAT_UPLOAD_MODULE: pathToFileURL(modulePath).href,
         LOCALCHAT_PRESENTATION_MODULE: pathToFileURL(presentationPath).href,
+        LOCALCHAT_LONG_TEXT_MODULE: featureModules.longText,
+        LOCALCHAT_PREVIEW_MODULE: featureModules.preview,
       },
     },
   );

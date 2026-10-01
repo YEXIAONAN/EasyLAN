@@ -39,6 +39,7 @@ func newHarness(t *testing.T) *harness {
 	mux.HandleFunc("POST /api/files/{id}/complete", m.Complete)
 	mux.HandleFunc("DELETE /api/files/{id}", m.Cancel)
 	mux.HandleFunc("GET /api/files/{id}", m.Download)
+	mux.HandleFunc("GET /api/files/{id}/preview", m.Preview)
 	h.srv = httptest.NewServer(mux)
 	t.Cleanup(func() {
 		h.srv.Close()
