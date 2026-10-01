@@ -12,7 +12,7 @@ const props = defineProps<{
   mobile: boolean;
   open: boolean;
 }>();
-const emit = defineEmits<{ close: []; rename: [] }>();
+const emit = defineEmits<{ close: []; rename: []; settings: [] }>();
 const panel = ref<HTMLElement>();
 const closeButton = ref<HTMLButtonElement>();
 const server = location.host;
@@ -157,6 +157,18 @@ function trapFocus(event: KeyboardEvent) {
     </section>
 
     <div class="sidebar-footer">
+      <button class="sidebar-settings" type="button" @click="emit('settings')">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6" />
+          <path
+            d="M12 3.5v2M12 18.5v2M20.5 12h-2M5.5 12h-2M18 6l-1.4 1.4M7.4 16.6 6 18M18 18l-1.4-1.4M7.4 7.4 6 6"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+          />
+        </svg>
+        <span>Settings</span>
+      </button>
       <div class="sidebar-server">
         <span>Server</span><span class="server-address">{{ server }}</span>
       </div>

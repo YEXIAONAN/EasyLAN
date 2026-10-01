@@ -3,7 +3,10 @@ import type { ConnectionState, Device, Message } from "../types/message";
 
 export const MAX_MESSAGE_SIZE = 2 * 1024 * 1024;
 
-export function useWebSocket(username: Ref<string>) {
+export function useWebSocket(
+  username: Ref<string>,
+  onIncoming?: (message: Message) => void,
+) {
   const messages = ref<Message[]>([]);
   const devices = ref<Device[]>([]);
   const state = ref<ConnectionState>("disconnected");
@@ -49,6 +52,13 @@ export function useWebSocket(username: Ref<string>) {
           error.value = message.content || "Unable to send message.";
         } else if (["text", "file", "system"].includes(message.type)) {
           messages.value.push(message);
+          // 仅对他人发来的文字/文件消息触发通知，忽略自己的回声与系统消息。
+          if (
+            (message.type === "text" || message.type === "file") &&
+            !ownIds.value.has(message.clientId || "")
+          ) {
+            onIncoming?.(message);
+          }
         }
       } catch {
         error.value = "The server sent an invalid message.";
