@@ -42,6 +42,72 @@ export const RECEIVE_HARMONIC = {
   peak: 0.05,
 };
 
+/** 内置音色的一个分音。 */
+export interface SoundPartial {
+  /** 相对基频的倍数；非整数比例会产生金属、木质等音色。 */
+  ratio: number;
+  /** 该分音的峰值增益。 */
+  gain: number;
+  /** 振荡器波形，决定音色。 */
+  type: "sine" | "triangle" | "square" | "sawtooth";
+}
+
+/** 内置可选音色。 */
+export interface SoundPreset {
+  id: string;
+  name: string;
+  frequency: number;
+  duration: number;
+  /** 起音时长，用于避免爆音。 */
+  attack: number;
+  partials: SoundPartial[];
+}
+
+/**
+ * 内置音色预设：在系统默认之外再提供 3 种提示音。
+ * 四者的基频、时长与波形均不同，音色彼此区分明显；
+ * 全部由振荡器合成，不依赖外部资源，因此不受 CSP 与网络影响。
+ */
+export const SOUND_PRESETS: SoundPreset[] = [
+  {
+    // 明亮的钟琴音：非整数分音 + 长衰减，余音悠长。
+    id: "chime",
+    name: "Chime",
+    frequency: 1046.5,
+    duration: 0.9,
+    attack: 0.012,
+    partials: [
+      { ratio: 1, gain: 0.14, type: "sine" },
+      { ratio: 2.76, gain: 0.06, type: "sine" },
+      { ratio: 5.4, gain: 0.03, type: "sine" },
+    ],
+  },
+  {
+    // 电子脉冲：方波主音 + 低八度三角波，短促、有数字感。
+    id: "pulse",
+    name: "Pulse",
+    frequency: 660,
+    duration: 0.16,
+    attack: 0.005,
+    partials: [
+      { ratio: 1, gain: 0.1, type: "square" },
+      { ratio: 0.5, gain: 0.04, type: "triangle" },
+    ],
+  },
+  {
+    // 木质马林巴：三角波主音 + 四倍频泛音，温暖、颗粒感强。
+    id: "marimba",
+    name: "Marimba",
+    frequency: 523.25,
+    duration: 0.5,
+    attack: 0.008,
+    partials: [
+      { ratio: 1, gain: 0.15, type: "triangle" },
+      { ratio: 4, gain: 0.035, type: "sine" },
+    ],
+  },
+];
+
 const DB_NAME = "localchat-sounds";
 const DB_VERSION = 1;
 const STORE_NAME = "sounds";
@@ -67,13 +133,19 @@ const DEFAULT_OPTION: SoundOption = {
   custom: false,
 };
 
+const PRESET_OPTIONS: SoundOption[] = SOUND_PRESETS.map((preset) => ({
+  id: preset.id,
+  name: preset.name,
+  custom: false,
+}));
+
 /**
- * 把持久化的选择收敛为可用标识：空或不可用（自定义音已被删除）时回退系统默认。
+ * 把持久化的选择收敛为可用标识：空或不可用（音色已被移除）时回退系统默认。
  * 纯函数，便于测试。
  */
-export function resolveSoundId(stored: string, customIds: string[]): string {
+export function resolveSoundId(stored: string, availableIds: string[]): string {
   if (!stored || stored === DEFAULT_SOUND_ID) return DEFAULT_SOUND_ID;
-  return customIds.includes(stored) ? stored : DEFAULT_SOUND_ID;
+  return availableIds.includes(stored) ? stored : DEFAULT_SOUND_ID;
 }
 
 function readEnabled(): boolean {
@@ -223,6 +295,32 @@ function playReceiveTone(ctx: AudioContext) {
   );
 }
 
+/** 播放内置音色预设：按分音叠加，用指数衰减包络保证音质干净、无爆音。 */
+function playPresetTone(ctx: AudioContext, preset: SoundPreset) {
+  const start = ctx.currentTime;
+  // 峰值求和超出上限时整体缩放，避免叠加后削波，保持音质清晰。
+  const peakSum = preset.partials.reduce((sum, partial) => sum + partial.gain, 0);
+  const scale = peakSum > 0.24 ? 0.24 / peakSum : 1;
+  for (const partial of preset.partials) {
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    oscillator.type = partial.type;
+    oscillator.frequency.setValueAtTime(
+      preset.frequency * partial.ratio,
+      start,
+    );
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(
+      partial.gain * scale,
+      start + preset.attack,
+    );
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + preset.duration);
+    oscillator.connect(gain).connect(ctx.destination);
+    oscillator.start(start);
+    oscillator.stop(start + preset.duration);
+  }
+}
+
 /** 解码并播放用户上传的音频；记录缺失或解码失败时返回 false 由上层回退默认音。 */
 async function playCustom(ctx: AudioContext, id: string): Promise<boolean> {
   try {
@@ -258,26 +356,28 @@ export function useNotificationSound() {
 
   const options = computed<SoundOption[]>(() => [
     DEFAULT_OPTION,
+    ...PRESET_OPTIONS,
     ...customSounds.value,
   ]);
+
+  /** 当前所有可用音色标识（内置预设 + 上传音频）。 */
+  function availableIds(): string[] {
+    return [
+      ...SOUND_PRESETS.map((preset) => preset.id),
+      ...customSounds.value.map((sound) => sound.id),
+    ];
+  }
 
   async function load() {
     const records = await run<SoundRecord[]>("readonly", (store) =>
       store.getAll(),
     );
-    if (!records?.length) {
-      selection.value = DEFAULT_SOUND_ID;
-      return;
-    }
-    customSounds.value = records.map((record) => ({
+    customSounds.value = (records || []).map((record) => ({
       id: record.id,
       name: record.name,
       custom: true,
     }));
-    selection.value = resolveSoundId(
-      pendingSelection,
-      customSounds.value.map((sound) => sound.id),
-    );
+    selection.value = resolveSoundId(pendingSelection, availableIds());
   }
   void load();
 
@@ -291,10 +391,7 @@ export function useNotificationSound() {
   }
 
   function select(id: string) {
-    selection.value = resolveSoundId(
-      id,
-      customSounds.value.map((sound) => sound.id),
-    );
+    selection.value = resolveSoundId(id, availableIds());
     pendingSelection = selection.value;
     try {
       localStorage.setItem(SOUND_SELECTION_KEY, selection.value);
@@ -310,14 +407,16 @@ export function useNotificationSound() {
   }
 
   async function trigger(id: string) {
-    const resolved = resolveSoundId(
-      id,
-      customSounds.value.map((sound) => sound.id),
-    );
+    const resolved = resolveSoundId(id, availableIds());
     const ctx = audioContext();
     if (!ctx) return;
     try {
       if (ctx.state === "suspended") await ctx.resume();
+      const preset = SOUND_PRESETS.find((item) => item.id === resolved);
+      if (preset) {
+        playPresetTone(ctx, preset);
+        return;
+      }
       if (resolved === DEFAULT_SOUND_ID || !(await playCustom(ctx, resolved))) {
         playReceiveTone(ctx);
       }
