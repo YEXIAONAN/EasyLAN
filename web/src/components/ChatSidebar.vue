@@ -75,7 +75,6 @@ function trapFocus(event: KeyboardEvent) {
       </div>
       <div>
         <h1 id="sidebar-title">LocalChat</h1>
-        <p>Local network messaging</p>
       </div>
       <button
         ref="closeButton"
@@ -88,7 +87,7 @@ function trapFocus(event: KeyboardEvent) {
     </div>
 
     <nav class="sidebar-chat" aria-label="Chats">
-      <h2 class="sidebar-section-title">Chat</h2>
+      <h2 class="sidebar-section-title">Chats</h2>
       <button
         class="network-chat"
         aria-current="page"
@@ -108,8 +107,7 @@ function trapFocus(event: KeyboardEvent) {
           </svg>
         </span>
         <span
-          ><strong>Local Network</strong
-          ><small>Messages & temporary files</small></span
+          ><strong>Local Network</strong><small>Messages & files</small></span
         >
         <i class="status-dot" :class="state" aria-hidden="true"></i>
       </button>
@@ -128,7 +126,7 @@ function trapFocus(event: KeyboardEvent) {
             <strong>{{ device.username }}</strong>
             <p>
               <span v-if="device.id === clientId">You · </span
-              ><code>{{ device.ip }}</code>
+              ><span>{{ device.ip }}</span>
             </p>
           </div>
           <i
@@ -147,29 +145,36 @@ function trapFocus(event: KeyboardEvent) {
       </p>
     </section>
 
-    <div class="sidebar-server">
-      <span>Server</span><code>{{ server }}</code>
-    </div>
-    <button
-      class="sidebar-user"
-      aria-label="Change your name"
-      @click="emit('rename')"
-    >
-      <span class="avatar user-avatar" aria-hidden="true">{{
-        [...(username || "?")][0]?.toUpperCase()
-      }}</span>
-      <span class="current-user"
-        ><strong>{{ username || "Choose your name" }}</strong
-        ><code>{{ ip || "Not connected" }}</code></span
+    <div class="sidebar-footer">
+      <div class="sidebar-server">
+        <span>Server</span><span class="server-address">{{ server }}</span>
+      </div>
+      <button
+        class="sidebar-user"
+        aria-label="Change your name"
+        @click="emit('rename')"
       >
-      <svg class="edit-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="m15 5 4 4M5 19l1-5L16 4a2.8 2.8 0 0 1 4 4L10 18l-5 1Z"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linejoin="round"
-        />
-      </svg>
-    </button>
+        <span class="avatar user-avatar" aria-hidden="true">{{
+          [...(username || "?")][0]?.toUpperCase()
+        }}</span>
+        <span class="current-user"
+          ><strong>{{ username || "Choose your name" }}</strong
+          ><span class="user-address">{{ ip || "Not connected" }}</span></span
+        >
+        <svg
+          class="edit-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="m15 5 4 4M5 19l1-5L16 4a2.8 2.8 0 0 1 4 4L10 18l-5 1Z"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+    </div>
   </aside>
 </template>

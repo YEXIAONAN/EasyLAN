@@ -4,7 +4,6 @@ import type { ConnectionState } from "../types/message";
 defineProps<{ state: ConnectionState; count: number; drawerOpen: boolean }>();
 defineEmits<{ menu: [] }>();
 const menuButton = ref<HTMLButtonElement>();
-const server = location.host;
 defineExpose({ focusMenu: () => menuButton.value?.focus() });
 </script>
 
@@ -28,21 +27,8 @@ defineExpose({ focusMenu: () => menuButton.value?.focus() });
     </button>
     <div class="chat-heading">
       <h2>Local Network</h2>
-      <p class="header-server">
-        <span>Server</span> <code>{{ server }}</code>
-      </p>
     </div>
     <div class="header-status">
-      <span class="connection" :class="state"
-        ><i class="status-dot" :class="state" aria-hidden="true"></i
-        >{{
-          state === "connected"
-            ? "Connected"
-            : state === "connecting"
-              ? "Connecting"
-              : "Disconnected"
-        }}</span
-      >
       <span class="desktop-device-count"
         >{{ count }} {{ count === 1 ? "device" : "devices" }}</span
       >
@@ -53,6 +39,16 @@ defineExpose({ focusMenu: () => menuButton.value?.focus() });
       >
         {{ count }} {{ count === 1 ? "device" : "devices" }}
       </button>
+      <span class="connection" :class="state"
+        ><i class="status-dot" :class="state" aria-hidden="true"></i
+        >{{
+          state === "connected"
+            ? "Connected"
+            : state === "connecting"
+              ? "Connecting"
+              : "Disconnected"
+        }}</span
+      >
     </div>
   </header>
 </template>

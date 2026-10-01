@@ -37,16 +37,23 @@ async function download() {
 
 <template>
   <div class="file-message">
-    <div class="file-icon" aria-hidden="true">↓</div>
+    <div class="file-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path
+          d="M14 3H6v18h12V7l-4-4Zm0 0v5h4M9 12h6M9 16h4"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
     <div class="file-details">
       <strong>{{ file.name }}</strong
-      ><span
-        >{{ formatBytes(file.size) }}
-        <span class="file-ready">· Ready to download</span></span
-      >
+      ><span>{{ formatBytes(file.size) }} </span>
     </div>
     <a
-      class="button download-button"
+      class="download-button"
       :href="`/api/files/${file.id}`"
       :download="file.name"
       :aria-disabled="checking"

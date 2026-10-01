@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import type { Message } from "../types/message";
 import MessageItem from "./MessageItem.vue";
+import { groupMessages, messageTime } from "../presentation/messages";
 const props = defineProps<{ messages: Message[]; ownIds: Set<string> }>();
+const groups = computed(() => groupMessages(props.messages, props.ownIds));
 const container = ref<HTMLElement>();
 const nearBottom = ref(true);
 const unread = ref(0);
@@ -35,38 +37,79 @@ watch(
     aria-label="Chat messages"
     @scroll="onScroll"
   >
-    <div v-if="!messages.some((m) => m.type !== 'system')" class="empty-state">
-      <svg
-        class="empty-chat-icon"
-        viewBox="0 0 48 48"
-        fill="none"
-        aria-hidden="true"
+    <div class="message-stream">
+      <div
+        v-if="!messages.some((m) => m.type !== 'system')"
+        class="empty-state"
       >
-        <path
-          d="M9 10h30v23H19L9 41V10Z"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linejoin="round"
-        />
-        <path
-          d="M17 19h14M17 25h10"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-        />
-      </svg>
-      <h2>No messages yet</h2>
-      <p>Send a message or drop a file to share with this network.</p>
-      <p class="session-hint">
-        Messages clear on refresh. Files expire when the server stops.
-      </p>
+        <svg
+          class="empty-chat-icon"
+          viewBox="0 0 48 48"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M9 10h30v23H19L9 41V10Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M17 19h14M17 25h10"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <h2>No messages yet</h2>
+        <p>Send a message or drop a file to share with this network.</p>
+        <p class="session-hint">
+          Messages clear on refresh. Files expire when the server stops.
+        </p>
+      </div>
+      <template v-for="group in groups" :key="group.key">
+        <div v-if="group.system" class="system-message">
+          {{ group.messages[0].content }}
+        </div>
+        <article
+          v-else
+          class="message-group"
+          :class="{ own: group.own }"
+          :aria-label="
+            group.own
+              ? 'Your messages'
+              : `Messages from ${group.messages[0].username}`
+          "
+        >
+          <div
+            v-if="!group.own"
+            class="avatar message-avatar"
+            aria-hidden="true"
+          >
+            {{ [...(group.messages[0].username || "?")][0]?.toUpperCase() }}
+          </div>
+          <div class="message-group-body">
+            <div v-if="!group.own" class="group-meta">
+              <strong>{{ group.messages[0].username }}</strong>
+              <span aria-hidden="true">·</span>
+              <span>{{ group.messages[0].ip }}</span>
+              <span aria-hidden="true">·</span>
+              <time>{{ messageTime(group.messages[0]) }}</time>
+            </div>
+            <div class="message-bubbles">
+              <MessageItem
+                v-for="(message, index) in group.messages"
+                :key="message.id || index"
+                :message="message"
+              />
+            </div>
+            <time v-if="group.own" class="group-time">{{
+              messageTime(group.messages[group.messages.length - 1])
+            }}</time>
+          </div>
+        </article>
+      </template>
     </div>
-    <MessageItem
-      v-for="(message, index) in messages"
-      :key="message.id || index"
-      :message="message"
-      :own="ownIds.has(message.clientId || '')"
-    />
     <button
       v-if="unread"
       class="new-message-button button primary"

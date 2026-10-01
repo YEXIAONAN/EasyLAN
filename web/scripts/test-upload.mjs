@@ -18,17 +18,33 @@ try {
   });
   const modulePath = `${directory}/useUpload.mjs`;
   await writeFile(modulePath, outputText);
+  const presentationSource = await readFile(
+    new URL("../src/presentation/messages.ts", import.meta.url),
+    "utf8",
+  );
+  const presentationPath = `${directory}/messages.mjs`;
+  await writeFile(
+    presentationPath,
+    ts.transpileModule(presentationSource, {
+      compilerOptions: {
+        target: ts.ScriptTarget.ES2022,
+        module: ts.ModuleKind.ESNext,
+      },
+    }).outputText,
+  );
   const result = spawnSync(
     process.execPath,
     [
       "--test",
       fileURLToPath(new URL("../tests/upload.test.mjs", import.meta.url)),
+      fileURLToPath(new URL("../tests/presentation.test.mjs", import.meta.url)),
     ],
     {
       stdio: "inherit",
       env: {
         ...process.env,
         LOCALCHAT_UPLOAD_MODULE: pathToFileURL(modulePath).href,
+        LOCALCHAT_PRESENTATION_MODULE: pathToFileURL(presentationPath).href,
       },
     },
   );

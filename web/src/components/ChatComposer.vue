@@ -39,45 +39,59 @@ function files(event: Event) {
 
 <template>
   <footer class="composer-area">
-    <div class="composer">
-      <button
-        class="attach-button"
-        title="Attach files"
-        aria-label="Attach files"
-        :disabled="!connected"
-        @click="picker?.click()"
-      >
-        +</button
-      ><input
-        ref="picker"
-        class="visually-hidden"
-        type="file"
-        multiple
-        @change="files"
-      /><textarea
-        ref="textarea"
-        v-model="draft"
-        aria-label="Message"
-        placeholder="Write a message…"
-        rows="1"
-        @input="resize"
-        @keydown="keydown"
-      ></textarea
-      ><button
-        class="button primary send-button"
-        :disabled="!connected || !draft.trim() || bytes > MAX_MESSAGE_SIZE"
-        @click="send"
-      >
-        Send <span aria-hidden="true">↑</span>
-      </button>
-    </div>
-    <div class="composer-hints">
-      <span :class="{ 'text-danger': bytes > MAX_MESSAGE_SIZE }">{{
-        bytes > MAX_MESSAGE_SIZE
-          ? "Message is too large. Consider sending it as a file."
-          : "Enter to send · Shift + Enter for a new line"
-      }}</span
-      ><span class="composer-file-hint">Files up to 1 GB</span>
+    <div class="composer-inner">
+      <div class="composer">
+        <button
+          class="attach-button"
+          title="Attach files"
+          aria-label="Attach files"
+          :disabled="!connected"
+          @click="picker?.click()"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M12 5v14M5 12h14"
+              stroke="currentColor"
+              stroke-width="1.7"
+              stroke-linecap="round"
+            />
+          </svg></button
+        ><input
+          ref="picker"
+          class="visually-hidden"
+          type="file"
+          multiple
+          @change="files"
+        /><textarea
+          ref="textarea"
+          v-model="draft"
+          aria-label="Message"
+          placeholder="Message…"
+          rows="1"
+          @input="resize"
+          @keydown="keydown"
+        ></textarea
+        ><button
+          class="send-button"
+          aria-label="Send"
+          title="Send message"
+          :disabled="!connected || !draft.trim() || bytes > MAX_MESSAGE_SIZE"
+          @click="send"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M12 19V5m-6 6 6-6 6 6"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </div>
+      <p v-if="bytes > MAX_MESSAGE_SIZE" class="composer-error" role="alert">
+        Message is too large. Consider sending it as a file.
+      </p>
     </div>
   </footer>
 </template>

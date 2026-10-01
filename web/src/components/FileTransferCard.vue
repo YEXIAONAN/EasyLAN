@@ -37,6 +37,12 @@ const labels = {
           <span>/ {{ formatBytes(upload.file.size) }}</span>
         </p>
       </div>
+      <a
+        v-if="upload.status === 'completed'"
+        class="text-button transfer-download"
+        :href="`/api/files/${upload.fileId}`"
+        >Download ↓</a
+      >
       <span class="transfer-state">{{ labels[upload.status] }}</span
       ><button
         v-if="upload.status === 'completed' || upload.status === 'cancelled'"
@@ -58,17 +64,15 @@ const labels = {
     >
       <div :style="{ width: `${progress}%` }"></div>
     </div>
-    <div class="transfer-bottom">
+    <div
+      v-if="!['completed', 'cancelled'].includes(upload.status)"
+      class="transfer-bottom"
+    >
       <span
-        v-if="upload.status !== 'completed' && upload.status !== 'cancelled'"
         >{{ upload.completedChunks }} / {{ upload.totalChunks }} chunks
-        <span class="transfer-speed"
-          >· {{ formatBytes(upload.speed) }}/s</span
-        ></span
-      ><strong
-        v-if="upload.status !== 'completed' && upload.status !== 'cancelled'"
-        >{{ progress }}%</strong
-      >
+        <span class="transfer-speed">· {{ formatBytes(upload.speed) }}/s</span>
+      </span>
+      <strong>{{ progress }}%</strong>
       <div class="transfer-actions">
         <button
           v-if="upload.status === 'uploading' || upload.status === 'queued'"
@@ -89,13 +93,8 @@ const labels = {
           class="text-button cancel-button"
           @click="$emit('cancel')"
         >
-          Cancel</button
-        ><a
-          v-if="upload.status === 'completed'"
-          class="text-button"
-          :href="`/api/files/${upload.fileId}`"
-          >Download ↓</a
-        >
+          Cancel
+        </button>
       </div>
     </div>
     <p v-if="upload.error" class="transfer-error" role="alert">
