@@ -12,3 +12,7 @@ coverage.out
 !.env.example
 /localchat-darwin-*
 /localchat-linux-*
+
+/easylan
+/easylan-darwin-*
+/easylan-linux-*

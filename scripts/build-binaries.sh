@@ -18,7 +18,7 @@ rm -f "$localchat_output/.build-version"
 for localchat_target in windows/amd64 windows/arm64 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
     localchat_os=${localchat_target%/*}
     localchat_arch=${localchat_target#*/}
-    localchat_filename="localchat-${localchat_os}-${localchat_arch}"
+    localchat_filename="easylan-${localchat_os}-${localchat_arch}"
     if [ "$localchat_os" = windows ]; then localchat_filename="${localchat_filename}.exe"; fi
     printf 'Building %s (%s)\n' "$localchat_filename" "$localchat_version"
     CGO_ENABLED=0 GOOS="$localchat_os" GOARCH="$localchat_arch" go build -trimpath \

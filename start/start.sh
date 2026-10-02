@@ -5,7 +5,7 @@ localchat_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 localchat_port=${LOCALCHAT_PORT:-}
 
 fail() {
-    printf 'LocalChat: %s\n' "$1" >&2
+    printf 'EasyLAN: %s\n' "$1" >&2
     exit 1
 }
 
@@ -43,9 +43,9 @@ case "$(uname -m)" in
     arm64|aarch64) localchat_arch=arm64 ;;
     *) fail 'Supported CPU architectures: amd64 and arm64.' ;;
 esac
-localchat_filename="localchat-${localchat_os}-${localchat_arch}"
+localchat_filename="easylan-${localchat_os}-${localchat_arch}"
 localchat_binary=''
-for localchat_candidate in "$localchat_root/release/$localchat_filename" "$localchat_root/$localchat_filename" "$localchat_root/localchat"; do
+for localchat_candidate in "$localchat_root/release/$localchat_filename" "$localchat_root/$localchat_filename" "$localchat_root/easylan" "$localchat_root/release/localchat-${localchat_os}-${localchat_arch}" "$localchat_root/localchat-${localchat_os}-${localchat_arch}" "$localchat_root/localchat"; do
     if [ -f "$localchat_candidate" ]; then
         localchat_binary=$localchat_candidate
         break
@@ -53,7 +53,7 @@ for localchat_candidate in "$localchat_root/release/$localchat_filename" "$local
 done
 [ -n "$localchat_binary" ] || fail "Missing $localchat_filename. Put it in the project root or release/, or build the project first (see README.md)."
 [ -x "$localchat_binary" ] || chmod +x "$localchat_binary"
-printf 'Starting LocalChat on port %s…\n' "$localchat_port"
+printf 'Starting EasyLAN on port %s…\n' "$localchat_port"
 cd "$localchat_root"
 # Explicit arguments follow the configured address, so -addr can override .env.
 exec "$localchat_binary" -addr "0.0.0.0:$localchat_port" "$@"

@@ -24,15 +24,15 @@ trap 'exit 1' 1 2 15
 for localchat_target in windows/amd64 windows/arm64 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
     localchat_os=${localchat_target%/*}
     localchat_arch=${localchat_target#*/}
-    localchat_filename="localchat-${localchat_os}-${localchat_arch}"
-    localchat_program=localchat
+    localchat_filename="easylan-${localchat_os}-${localchat_arch}"
+    localchat_program=easylan
     localchat_extension=tar.gz
     if [ "$localchat_os" = windows ]; then
         localchat_filename="${localchat_filename}.exe"
-        localchat_program=localchat.exe
+        localchat_program=easylan.exe
         localchat_extension=zip
     fi
-    localchat_package="localchat-${localchat_version}-${localchat_os}-${localchat_arch}.${localchat_extension}"
+    localchat_package="easylan-${localchat_version}-${localchat_os}-${localchat_arch}.${localchat_extension}"
     localchat_directory="$localchat_staging/$localchat_os-$localchat_arch"
     mkdir -p "$localchat_directory"
     cp "$localchat_output/$localchat_filename" "$localchat_directory/$localchat_program"

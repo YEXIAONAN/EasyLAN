@@ -24,20 +24,20 @@ try {
         'ARM64' { $localchatArch = 'arm64' }
         default { throw 'Supported Windows CPU architectures: amd64 and arm64.' }
     }
-    $localchatFilename = "localchat-windows-$localchatArch.exe"
+    $localchatFilename = "easylan-windows-$localchatArch.exe"
     $localchatBinary = $null
-    foreach ($relative in @("release\$localchatFilename", $localchatFilename, 'localchat.exe')) {
+    foreach ($relative in @("release\$localchatFilename", $localchatFilename, 'easylan.exe', "release\localchat-windows-$localchatArch.exe", "localchat-windows-$localchatArch.exe", 'localchat.exe')) {
         $candidate = Join-Path $localchatRoot $relative
         if (Test-Path -LiteralPath $candidate -PathType Leaf) { $localchatBinary = $candidate; break }
     }
     if (-not $localchatBinary) {
         throw "Missing $localchatFilename. Put it in the project root or release/, or build the project first (see README.md)."
     }
-    Write-Host "Starting LocalChat on port $localchatPort..."
+    Write-Host "Starting EasyLAN on port $localchatPort..."
     Set-Location -LiteralPath $localchatRoot
     & $localchatBinary -addr "0.0.0.0:$localchatPort" @args
     exit $LASTEXITCODE
 } catch {
-    Write-Host "LocalChat: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "EasyLAN: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }

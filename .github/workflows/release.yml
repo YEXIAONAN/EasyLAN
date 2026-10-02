@@ -58,10 +58,10 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           gh release create "$VERSION" \
-            release/localchat-"$VERSION"-*.zip \
-            release/localchat-"$VERSION"-*.tar.gz \
+            release/easylan-"$VERSION"-*.zip \
+            release/easylan-"$VERSION"-*.tar.gz \
             release/SHA256SUMS.txt \
-            --verify-tag --draft --generate-notes --title "LocalChat $VERSION"
+            --verify-tag --draft --generate-notes --title "EasyLAN $VERSION"
       - name: Publish Release
         env:
           GH_TOKEN: ${{ github.token }}
