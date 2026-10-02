@@ -4,7 +4,7 @@
 
 ## 初始检查
 
-- 真实 origin：`git@github.com:YEXIAONAN/LocalChat.git`，分支 main，起点 v1.1.1 / f29732b；仓库 URL 保持真实。
+- 重构开始时的 origin：`git@github.com:YEXIAONAN/LocalChat.git`，分支 main，起点 v1.1.1 / f29732b。
 - 原前端 Vue 3 + TypeScript / Vite，web/dist Go embed，230px 常驻 Sidebar，设置在底部，选择/拖拽直接上传，没有截图暂存队列或图片内联消息。
 - 原功能包含 WebSocket 聊天/在线列表、HTTP 分片/暂停/重试/取消/下载、allowlist 预览、长文本 TXT、双路音效、标题/favicon 未读与语言。
 - 协议：文字/身份/在线/完成文件广播走 WebSocket；实际文件走 HTTP 分片。不改 Go module、cmd 路径、HTTP 路由或消息字段。
@@ -36,4 +36,8 @@
 - Release：六平台本地 dev 交叉编译与打包通过；六个 SHA256、ZIP/tar 内容、Unix执行位、GOOS/GOARCH/CGO 元数据均通过。
 - CI：push main / PR；Release：仅 v*.*.* Tag，版本注入来自该 Tag。发布是否成功以 GitHub Actions / Release 结果为准。
 
-浏览器工具保存的访问拒绝设置仍阻止 http://127.0.0.1:8794/；用户已文字授权并表示解除设置，工具重试仍明确返回拒绝。未通过其他地址、浏览器或 CDP 绕过。桌面/平板/手机视觉验收及真实剪贴板手势待该权限恢复，不能宣称已通过。用户随后明确确认先发布 v1.2.0，README 界面截图延后补充。仓库改名同样受 GitHub 浏览器访问权限阻止，本次保留真实 origin 和现有链接。
+浏览器工具保存的访问拒绝设置仍阻止 http://127.0.0.1:8794/；用户已文字授权并表示解除设置，工具重试仍明确返回拒绝。未通过其他地址、浏览器或 CDP 绕过。桌面/平板/手机视觉验收及真实剪贴板手势待该权限恢复，不能宣称已通过。用户随后明确确认先发布 v1.2.0，README 界面截图延后补充。
+
+## 仓库改名同步
+
+用户于 2026-10-02 手动将 GitHub 仓库改为 `YEXIAONAN/EasyLAN`。本地 origin 同步为 `git@github.com:YEXIAONAN/EasyLAN.git`；README 的 CI Badge / Release 链接与应用设置中的 GitHub 链接使用新地址。Go module / cmd 路径、配置键与浏览器存储键保留兼容名称。现有 v1.2.0 Tag 不变。

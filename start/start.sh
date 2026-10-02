@@ -45,7 +45,7 @@ case "$(uname -m)" in
 esac
 localchat_filename="easylan-${localchat_os}-${localchat_arch}"
 localchat_binary=''
-for localchat_candidate in "$localchat_root/release/$localchat_filename" "$localchat_root/$localchat_filename" "$localchat_root/easylan" "$localchat_root/release/localchat-${localchat_os}-${localchat_arch}" "$localchat_root/localchat-${localchat_os}-${localchat_arch}" "$localchat_root/localchat"; do
+for localchat_candidate in "$localchat_root/easylan" "$localchat_root/$localchat_filename" "$localchat_root/release/$localchat_filename" "$localchat_root/localchat" "$localchat_root/localchat-${localchat_os}-${localchat_arch}" "$localchat_root/release/localchat-${localchat_os}-${localchat_arch}"; do
     if [ -f "$localchat_candidate" ]; then
         localchat_binary=$localchat_candidate
         break
@@ -54,6 +54,7 @@ done
 [ -n "$localchat_binary" ] || fail "Missing $localchat_filename. Put it in the project root or release/, or build the project first (see README.md)."
 [ -x "$localchat_binary" ] || chmod +x "$localchat_binary"
 printf 'Starting EasyLAN on port %s…\n' "$localchat_port"
+printf 'Binary: %s\n' "$localchat_binary"
 cd "$localchat_root"
 # Explicit arguments follow the configured address, so -addr can override .env.
 exec "$localchat_binary" -addr "0.0.0.0:$localchat_port" "$@"

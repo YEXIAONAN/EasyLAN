@@ -1,6 +1,6 @@
 # EasyLAN
 
-[![CI](https://github.com/YEXIAONAN/LocalChat/actions/workflows/ci.yml/badge.svg)](https://github.com/YEXIAONAN/LocalChat/actions/workflows/ci.yml)
+[![CI](https://github.com/YEXIAONAN/EasyLAN/actions/workflows/ci.yml/badge.svg)](https://github.com/YEXIAONAN/EasyLAN/actions/workflows/ci.yml)
 
 **Same network. Chat and share.**
 
@@ -10,7 +10,7 @@ Go + WebSocket + 原生 HTML/CSS/JavaScript。所有资源嵌入单个二进制�
 
 ## 使用
 
-从 [EasyLAN v1.2.0 Release](https://github.com/YEXIAONAN/LocalChat/releases/tag/v1.2.0) 下载对应系统与 CPU 的压缩包，解压后启动 `easylan`（Windows 为 `easylan.exe`），默认监听 `0.0.0.0:8787`。其他设备访问终端显示的 LAN 地址。输入设备名称后即可使用。
+从 [EasyLAN v1.2.1 Release](https://github.com/YEXIAONAN/EasyLAN/releases/tag/v1.2.1) 下载对应系统与 CPU 的压缩包，解压后启动 `easylan`（Windows 为 `easylan.exe`），默认监听 `0.0.0.0:8787`。其他设备访问终端显示的 LAN 地址。输入设备名称后即可使用。
 
 ```sh
 ./easylan
@@ -29,7 +29,7 @@ Go + WebSocket + 原生 HTML/CSS/JavaScript。所有资源嵌入单个二进制�
 
 **临时性**：聊天只在页面内存，刷新清空；文件只保存在服务器本次会话的系统临时目录。Ctrl+C 正常退出会删除文件。服务器不回放历史，刷新不恢复上传。
 
-[GitHub Releases](https://github.com/YEXIAONAN/LocalChat/releases) 中的 v1.2.0 开始使用 EasyLAN 程序与压缩包名称；v1.1.1 及此前版本仍名为 LocalChat。GitHub 仓库暂保留 `YEXIAONAN/LocalChat`，所有链接使用实际地址。
+[GitHub Releases](https://github.com/YEXIAONAN/EasyLAN/releases) 中的 v1.2.0 开始使用 EasyLAN 程序与压缩包名称；v1.1.1 及此前版本仍名为 LocalChat。GitHub 仓库现为 `YEXIAONAN/EasyLAN`。
 
 ## 文件与消息
 
@@ -93,15 +93,17 @@ npm run build
 cd ..
 go test ./...
 go vet ./...
-CGO_ENABLED=0 go build -trimpath -o easylan ./cmd/localchat
+./scripts/build-local.sh
 ./easylan
 ```
 
-Windows 构建使用 `go build -trimpath -o easylan.exe ./cmd/localchat`。仓库保留生产 `web/dist`，因此仅用 Go 就能编译已提交界面；Node 不进入产品依赖。更新前端时需同步 dist。
+也可执行 `make build`，完成前端构建并注入本地 Git 版本。Windows 在 Git Bash 中运行 `sh scripts/build-local.sh`，输出 `easylan.exe`。仓库保留生产 `web/dist`，因此仅用 Go 就能编译已提交界面；Node 不进入产品依赖。更新前端时需同步 dist。
 
 ### 唯一版本来源
 
-`internal/buildinfo.Name = "EasyLAN"`，`internal/buildinfo.Version` 默认 `dev`。Go ldflags 注入 Release Tag，CLI、`GET /api/info`、Settings 显示同一个版本。npm 包版本只作私有工具元数据。
+`internal/buildinfo.Name = "EasyLAN"`，`internal/buildinfo.Version` 默认 `dev`。Go ldflags 注入版本，CLI、`GET /api/info`、Settings 显示同一个版本。npm 包版本只作私有工具元数据。
+
+正式 Release 的版本来自触发构建的 GitHub Tag。本地 `make build` / `scripts/build-local.sh` 自动读取当前 checkout 的 Git Tag：干净的 Tag 提交显示 `v1.2.0`；有未提交修改显示 `v1.2.0-dirty`；Tag 后有新提交显示 `v1.2.0-N-g<commit>`。没有可用 Tag、没有 Git，或直接执行未注入版本的 `go build` / `go run`，才显示 `dev`。程序运行时不会联网查询最新 Tag，避免把旧程序误标成新版本，也保证离线可用。浅克隆缺少 Tag 时，可执行 `git fetch --tags`。
 
 ```sh
 CGO_ENABLED=0 go build -trimpath \
@@ -125,29 +127,33 @@ CGO_ENABLED=0 go build -trimpath \
 git checkout main
 git pull --ff-only
 # 下一个补丁版本示例
-git tag v1.2.1
-git push origin v1.2.1
+git tag v1.2.2
+git push origin v1.2.2
 ```
 
-自动生成 `EasyLAN v1.2.0` Release，支持六个平台：
+Tag 自动决定 Release 版本；当前 `EasyLAN v1.2.1` 支持六个平台：
 
 | 平台 | 压缩包 |
 | --- | --- |
-| Windows AMD64 / ARM64 | `easylan-v1.2.0-windows-{amd64,arm64}.zip` |
-| Linux AMD64 / ARM64 | `easylan-v1.2.0-linux-{amd64,arm64}.tar.gz` |
-| macOS Intel / Apple Silicon | `easylan-v1.2.0-darwin-{amd64,arm64}.tar.gz` |
+| Windows AMD64 / ARM64 | `easylan-v1.2.1-windows-{amd64,arm64}.zip` |
+| Linux AMD64 / ARM64 | `easylan-v1.2.1-linux-{amd64,arm64}.tar.gz` |
+| macOS Intel / Apple Silicon | `easylan-v1.2.1-darwin-{amd64,arm64}.tar.gz` |
 
 ZIP 包含 `easylan.exe`，tar.gz 包含可执行的 `easylan`，另上传 `SHA256SUMS.txt`。Tag 自动注入版本，所有目标 `CGO_ENABLED=0`。
 
 ```sh
 ./scripts/build-release.sh               # 本地检查并生成 dev 六平台包，不发布
-VERSION=v1.2.0 ./scripts/build-release.sh # 本地验证指定版本，不创建 Tag
+VERSION=v1.2.1 ./scripts/build-release.sh # 本地验证指定版本，不创建 Tag
 (cd release && sha256sum -c SHA256SUMS.txt) # Linux；macOS 用 shasum -a 256 -c
 ```
 
 ## 网络
 
 同一可互通的网络，允许服务器监听端口即可使用；程序不自动修改防火墙。HTTP 无账号与加密，适合可信临时 LAN，不应映射公网。来源校验限制浏览器跨来源请求，不能当作身份认证。在线数量按 WebSocket 连接计算，同一设备多页面分别计数。
+
+启动脚本监听 `0.0.0.0:<端口>`。另一台设备必须使用终端 LAN 列表中的真实 Wi-Fi / 网线地址，例如 `http://10.13.96.216:2778/`；`127.0.0.1` / `localhost` 只用于服务器本机。LAN 列表不显示 point-to-point VPN / 代理隧道地址。
+
+如果另一台设备显示 **502**，先关闭它的 VPN / 浏览器或系统代理重试，或将局域网地址设为直连；EasyLAN 自身不生成 502。可在另一台设备执行 `curl --noproxy '*' http://<服务器LAN-IP>:<端口>/api/info` 检查直连（Windows 用 `curl.exe`）。如果直连仍超时或拒绝连接，检查是否处于访客 Wi-Fi、路由器客户端隔离，以及服务器防火墙是否允许该 TCP 端口。
 
 正常退出清理文件；强制终止、断电或系统崩溃无法保证清理。下载中的文件和未完成分片都随本次服务会话结束。
 

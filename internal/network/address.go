@@ -23,7 +23,7 @@ func LANAddresses() []string {
 	}
 	seen := make(map[string]bool)
 	for _, iface := range interfaces {
-		if iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback != 0 {
+		if !isLANInterface(iface.Flags) {
 			continue
 		}
 		addresses, err := iface.Addrs()
@@ -43,4 +43,9 @@ func LANAddresses() []string {
 	}
 	sort.Strings(result)
 	return result
+}
+
+// Point-to-point VPN/proxy tunnels are not addresses to share with LAN peers.
+func isLANInterface(flags net.Flags) bool {
+	return flags&net.FlagUp != 0 && flags&(net.FlagLoopback|net.FlagPointToPoint) == 0
 }

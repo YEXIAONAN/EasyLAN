@@ -51,7 +51,7 @@ func run() error {
 	for _, ip := range network.LANAddresses() {
 		fmt.Printf("  http://%s:%s\n", ip, port)
 	}
-	fmt.Println("\nOpen EasyLAN from another device on the same network.\nIf other devices cannot connect, check whether the TCP port is allowed by your firewall.\n\nPress Ctrl+C to stop.")
+	fmt.Println("\nOpen a LAN URL above from another device on the same network (not 127.0.0.1).\nIf you see 502, bypass your browser/system proxy or VPN for LAN addresses.\nIf the connection times out, check the firewall and Wi-Fi client isolation.\n\nPress Ctrl+C to stop.")
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	result := make(chan error, 1)

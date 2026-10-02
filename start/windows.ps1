@@ -26,7 +26,7 @@ try {
     }
     $localchatFilename = "easylan-windows-$localchatArch.exe"
     $localchatBinary = $null
-    foreach ($relative in @("release\$localchatFilename", $localchatFilename, 'easylan.exe', "release\localchat-windows-$localchatArch.exe", "localchat-windows-$localchatArch.exe", 'localchat.exe')) {
+    foreach ($relative in @('easylan.exe', $localchatFilename, "release\$localchatFilename", 'localchat.exe', "localchat-windows-$localchatArch.exe", "release\localchat-windows-$localchatArch.exe")) {
         $candidate = Join-Path $localchatRoot $relative
         if (Test-Path -LiteralPath $candidate -PathType Leaf) { $localchatBinary = $candidate; break }
     }
@@ -34,6 +34,7 @@ try {
         throw "Missing $localchatFilename. Put it in the project root or release/, or build the project first (see README.md)."
     }
     Write-Host "Starting EasyLAN on port $localchatPort..."
+    Write-Host "Binary: $localchatBinary"
     Set-Location -LiteralPath $localchatRoot
     & $localchatBinary -addr "0.0.0.0:$localchatPort" @args
     exit $LASTEXITCODE

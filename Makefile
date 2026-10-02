@@ -1,7 +1,7 @@
 .PHONY: build web test release clean
 
 build: web
-	CGO_ENABLED=0 go build -trimpath -o easylan ./cmd/localchat
+	./scripts/build-local.sh
 
 web:
 	cd web && npm ci && npm run build
