@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t, notice } from "../i18n";
 import { nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import type { FileInfo } from "../types/message";
 import { formatBytes } from "../format";
@@ -109,12 +110,12 @@ function trap(event: KeyboardEvent) {
           class="text-button"
           @click="copy"
         >
-          Copy
+          {{ t('Copy') }}
         </button>
         <button
           ref="closeButton"
           class="icon-button"
-          aria-label="Close preview"
+          :aria-label="t('Close preview')"
           @click="emit('close')"
         >
           ×
@@ -122,22 +123,22 @@ function trap(event: KeyboardEvent) {
       </header>
       <div class="preview-body">
         <p v-if="downloadError" class="preview-status" role="alert">
-          {{ downloadError }}
+          {{ notice(downloadError) }}
         </p>
         <p v-if="loading" class="preview-status" role="status">
-          Loading preview…
+          {{ t('Loading preview…') }}
         </p>
-        <p v-else-if="error" class="preview-status" role="alert">{{ error }}</p>
+        <p v-else-if="error" class="preview-status" role="alert">{{ notice(error) }}</p>
         <template v-else-if="file.previewType === 'text'">
           <p v-if="truncated" class="preview-limit">
-            Previewing first 512 KiB.
+            {{ t('Previewing first 512 KiB.') }}
           </p>
           <p v-if="copyNotice" class="preview-limit" role="status">
-            {{ copyNotice }}
+            {{ t(copyNotice) }}
           </p>
           <pre class="preview-text">{{ text }}</pre>
           <p v-if="truncated" class="preview-limit">
-            Preview truncated. Download full file below.
+            {{ t('Preview truncated. Download full file below.') }}
           </p>
         </template>
         <img
@@ -151,18 +152,17 @@ function trap(event: KeyboardEvent) {
         />
         <template v-else-if="file.previewType === 'pdf'">
           <p class="preview-status">
-            Use your browser’s native viewer to preview this PDF.
+            {{ t('Use your browser’s native viewer to preview this PDF.') }}
           </p>
           <a
             class="download-button"
             :href="url"
             target="_blank"
             rel="noopener noreferrer"
-            >Open PDF preview ↗</a
+            >{{ t('Open PDF preview') }} ↗</a
           >
           <p class="preview-limit pdf-hint">
-            If preview is unavailable in this browser, download the file to open
-            it locally.
+            {{ t('If preview is unavailable in this browser, download the file to open it locally.') }}
           </p>
         </template>
       </div>
@@ -176,10 +176,10 @@ function trap(event: KeyboardEvent) {
           @click.prevent="download"
           >{{
             checking
-              ? "Checking…"
+              ? t("Checking…")
               : truncated
-                ? "Download full file"
-                : "Download"
+                ? t("Download full file")
+                : t("Download")
           }}
           ↓</a
         >

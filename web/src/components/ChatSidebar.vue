@@ -2,12 +2,12 @@
 import { nextTick, ref, watch } from "vue";
 import type { ConnectionState, Device } from "../types/message";
 import { REPOSITORY_URL } from "../config";
+import { t } from "../i18n";
 
 const props = defineProps<{
   devices: Device[];
   version: string;
   infoLoading: boolean;
-  soundEnabled: boolean;
   clientId: string;
   state: ConnectionState;
   mobile: boolean;
@@ -16,11 +16,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: [];
   rename: [];
-  sound: [enabled: boolean];
+  settings: [];
 }>();
 const panel = ref<HTMLElement>();
 const closeButton = ref<HTMLButtonElement>();
 const server = location.host;
+const settingsButton = ref<HTMLButtonElement>();
+defineExpose({ focusSettings: () => settingsButton.value?.focus() });
 
 watch(
   () => props.open,
@@ -35,7 +37,7 @@ watch(
 function trapFocus(event: KeyboardEvent) {
   if (!props.mobile || !props.open || event.key !== "Tab") return;
   const controls = Array.from(
-    panel.value?.querySelectorAll<HTMLElement>("button, a[href]") || [],
+    panel.value?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], select:not([disabled])') || [],
   );
   const first = controls[0],
     last = controls.at(-1);
@@ -85,15 +87,15 @@ function trapFocus(event: KeyboardEvent) {
       <button
         ref="closeButton"
         class="sidebar-close icon-button"
-        aria-label="Close sidebar"
+        :aria-label="t('Close sidebar')"
         @click="emit('close')"
       >
         ×
       </button>
     </div>
 
-    <nav class="sidebar-chat" aria-label="Chats">
-      <h2 class="sidebar-section-title">Chats</h2>
+    <nav class="sidebar-chat" :aria-label="t('Chats')">
+      <h2 class="sidebar-section-title">{{ t('Chats') }}</h2>
       <button
         class="network-chat"
         aria-current="page"
@@ -113,7 +115,7 @@ function trapFocus(event: KeyboardEvent) {
           </svg>
         </span>
         <span
-          ><strong>Local Network</strong><small>Messages & files</small></span
+          ><strong>{{ t('Local Network') }}</strong><small>{{ t('Messages & files') }}</small></span
         >
         <i class="status-dot" :class="state" aria-hidden="true"></i>
       </button>
@@ -121,7 +123,7 @@ function trapFocus(event: KeyboardEvent) {
 
     <section class="sidebar-devices" aria-labelledby="devices-title">
       <h2 id="devices-title" class="sidebar-section-title">
-        Devices <span>· {{ devices.length }}</span>
+        {{ t('Devices') }} <span>· {{ devices.length }}</span>
       </h2>
       <ul class="device-list">
         <li v-for="device in devices" :key="device.id">
@@ -130,7 +132,7 @@ function trapFocus(event: KeyboardEvent) {
             class="device-row"
             :type="device.id === clientId ? 'button' : undefined"
             :aria-label="
-              device.id === clientId ? 'Change your name' : undefined
+              device.id === clientId ? t('Change your name') : undefined
             "
             @click="device.id === clientId && emit('rename')"
           >
@@ -140,14 +142,14 @@ function trapFocus(event: KeyboardEvent) {
             <div class="device-details">
               <strong>{{ device.username }}</strong>
               <p>
-                <span v-if="device.id === clientId">You · </span
+                <span v-if="device.id === clientId">{{ t('You') }} · </span
                 ><span>{{ device.ip }}</span>
               </p>
             </div>
             <i
               class="status-dot connected"
-              title="Online"
-              aria-label="Online"
+              :title="t('Online')"
+              :aria-label="t('Online')"
             ></i>
           </component>
         </li>
@@ -155,47 +157,29 @@ function trapFocus(event: KeyboardEvent) {
       <p v-if="!devices.length" class="sidebar-empty">
         {{
           state === "connecting"
-            ? "Connecting to the server…"
-            : "No connected devices"
+            ? t("Connecting to the server…")
+            : t("No connected devices")
         }}
       </p>
     </section>
 
     <div class="sidebar-footer">
       <button
-        class="sidebar-sound"
+        ref="settingsButton"
+        class="sidebar-settings"
         type="button"
-        aria-label="Message sound"
-        :aria-pressed="soundEnabled"
-        @click="emit('sound', !soundEnabled)"
+        :aria-label="t('Settings')"
+        aria-haspopup="dialog"
+        @click="emit('settings')"
       >
-        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <path
-            d="M4 7h3l4-3v12l-4-3H4V7Z"
-            stroke="currentColor"
-            stroke-width="1.3"
-            stroke-linejoin="round"
-          />
-          <path
-            v-if="soundEnabled"
-            d="M14 6a6 6 0 0 1 0 8"
-            stroke="currentColor"
-            stroke-width="1.3"
-            stroke-linecap="round"
-          />
-          <path
-            v-else
-            d="m14 8 4 4m0-4-4 4"
-            stroke="currentColor"
-            stroke-width="1.3"
-            stroke-linecap="round"
-          />
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="m9 3-.7 2.5-2.2 1.3-2.5-.6-2 3.6L3.5 12l-1.9 2.2 2 3.6 2.5-.6 2.2 1.3L9 21h4l.7-2.5 2.2-1.3 2.5.6 2-3.6-1.9-2.2 1.9-2.2-2-3.6-2.5.6-2.2-1.3L13 3H9Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" />
+          <circle cx="11" cy="12" r="3" stroke="currentColor" stroke-width="1.4" />
         </svg>
-        <span>Message sound</span
-        ><span class="sound-state">{{ soundEnabled ? "On" : "Off" }}</span>
+        <span>{{ t('Settings') }}</span>
       </button>
       <div class="sidebar-server">
-        <span>Server</span><span class="server-address">{{ server }}</span>
+        <span>{{ t('Server') }}</span><span class="server-address">{{ server }}</span>
       </div>
       <a
         v-if="REPOSITORY_URL"
@@ -216,10 +200,10 @@ function trapFocus(event: KeyboardEvent) {
             />
           </svg>
         </span>
-        <span>LocalChat Repository</span>
+        <span>{{ t('LocalChat Repository') }}</span>
       </a>
-      <p class="sidebar-version" aria-label="Application version">
-        {{ version || (infoLoading ? "…" : "Version unavailable") }}
+      <p class="sidebar-version" :aria-label="t('Application version')">
+        {{ version || (infoLoading ? "…" : t("Version unavailable")) }}
       </p>
     </div>
   </aside>

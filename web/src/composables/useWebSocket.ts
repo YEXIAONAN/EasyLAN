@@ -111,6 +111,12 @@ export function useWebSocket(username: Ref<string>) {
     ip,
     error,
     sendText,
+    sentSoundEnabled: notification.sentSoundEnabled,
+    receivedTone: notification.receivedTone,
+    sentTone: notification.sentTone,
+    setSentSoundEnabled: notification.setSentSoundEnabled,
+    setTone: notification.setTone,
+    previewSound: notification.previewSound,
     soundEnabled: notification.soundEnabled,
     setSoundEnabled: notification.setSoundEnabled,
   };

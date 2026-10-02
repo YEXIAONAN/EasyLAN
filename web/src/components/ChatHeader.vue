@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from "../i18n";
 import { ref } from "vue";
 import type { ConnectionState } from "../types/message";
 defineProps<{ state: ConnectionState; count: number; drawerOpen: boolean }>();
@@ -12,7 +13,7 @@ defineExpose({ focusMenu: () => menuButton.value?.focus() });
     <button
       ref="menuButton"
       class="menu-button icon-button"
-      aria-label="Open sidebar"
+      :aria-label="t('Open sidebar')"
       :aria-expanded="drawerOpen"
       @click="$emit('menu')"
     >
@@ -26,27 +27,27 @@ defineExpose({ focusMenu: () => menuButton.value?.focus() });
       </svg>
     </button>
     <div class="chat-heading">
-      <h2>Local Network</h2>
+      <h2>{{ t('Local Network') }}</h2>
     </div>
     <div class="header-status">
       <span class="desktop-device-count"
-        >{{ count }} {{ count === 1 ? "device" : "devices" }}</span
+        >{{ t(count === 1 ? "{count} device" : "{count} devices", { count }) }}</span
       >
       <button
         class="header-devices"
-        aria-label="View connected devices"
+        :aria-label="t('View connected devices')"
         @click="$emit('menu')"
       >
-        {{ count }} {{ count === 1 ? "device" : "devices" }}
+        {{ t(count === 1 ? "{count} device" : "{count} devices", { count }) }}
       </button>
       <span class="connection" :class="state"
         ><i class="status-dot" :class="state" aria-hidden="true"></i
         >{{
           state === "connected"
-            ? "Connected"
+            ? t("Connected")
             : state === "connecting"
-              ? "Connecting"
-              : "Disconnected"
+              ? t("Connecting")
+              : t("Disconnected")
         }}</span
       >
     </div>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from "../i18n";
 import { computed, ref } from "vue";
 import type { Message } from "../types/message";
 import FileMessage from "./FileMessage.vue";
@@ -67,14 +68,14 @@ async function copy() {
         :aria-expanded="expanded"
         @click="expanded = !expanded"
       >
-        {{ expanded ? "Collapse" : "Show more" }}
+        {{ expanded ? t("Collapse") : t("Show more") }}
       </button>
       <button
         class="copy-button icon-button"
         :class="{ 'copy-feedback': copied || copyError }"
-        :aria-label="copied ? 'Copied' : 'Copy message'"
+        :aria-label="copied ? t('Copied') : t('Copy message')"
         :title="
-          copyError ? 'Select text to copy' : copied ? 'Copied' : 'Copy message'
+          copyError ? t('Select text to copy') : copied ? t('Copied') : t('Copy message')
         "
         @click="copy"
       >
@@ -99,7 +100,7 @@ async function copy() {
         </svg>
       </button>
       <span v-if="copyError" class="copy-error" role="status"
-        >Select text to copy</span
+        >{{ t('Select text to copy') }}</span
       >
     </div>
     <FileMessage v-else-if="message.file" :file="message.file" />

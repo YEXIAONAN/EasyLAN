@@ -50,6 +50,14 @@ try {
     );
     featureModules[name] = pathToFileURL(path).href;
   }
+  const i18nPath = `${directory}/i18n.mjs`;
+  await writeFile(
+    i18nPath,
+    ts.transpileModule(
+      await readFile(new URL("../src/i18n.ts", import.meta.url), "utf8"),
+      { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } },
+    ).outputText,
+  );
   const notificationPath = `${directory}/useNotification.mjs`;
   const notificationSource = await readFile(
     new URL("../src/composables/useNotification.ts", import.meta.url),
@@ -89,11 +97,13 @@ try {
       fileURLToPath(new URL("../tests/presentation.test.mjs", import.meta.url)),
       fileURLToPath(new URL("../tests/long-text.test.mjs", import.meta.url)),
       fileURLToPath(new URL("../tests/notification.test.mjs", import.meta.url)),
+      fileURLToPath(new URL("../tests/i18n.test.mjs", import.meta.url)),
     ],
     {
       stdio: "inherit",
       env: {
         ...process.env,
+        LOCALCHAT_I18N_MODULE: pathToFileURL(i18nPath).href,
         LOCALCHAT_NOTIFICATION_MODULE: pathToFileURL(notificationPath).href,
         LOCALCHAT_WEBSOCKET_MODULE: pathToFileURL(websocketPath).href,
         LOCALCHAT_UPLOAD_MODULE: pathToFileURL(modulePath).href,

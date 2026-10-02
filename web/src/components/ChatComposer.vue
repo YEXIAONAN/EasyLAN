@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t, notice as translateNotice } from "../i18n";
 import { nextTick, ref, watch } from "vue";
 import { createTextFile, textSendMode } from "../presentation/longText";
 const props = defineProps<{
@@ -88,8 +89,8 @@ function files(event: Event) {
       <div class="composer">
         <button
           class="attach-button"
-          title="Attach files"
-          aria-label="Attach files"
+          :title="t('Attach files')"
+          :aria-label="t('Attach files')"
           :disabled="!connected"
           @click="picker?.click()"
         >
@@ -110,16 +111,16 @@ function files(event: Event) {
         /><textarea
           ref="textarea"
           v-model="draft"
-          aria-label="Message"
-          placeholder="Message…"
+          :aria-label="t('Message')"
+          :placeholder="t('Message…')"
           rows="1"
           @input="resize"
           @keydown="keydown"
         ></textarea
         ><button
           class="send-button"
-          aria-label="Send"
-          title="Send message"
+          :aria-label="t('Send')"
+          :title="t('Send message')"
           :disabled="!connected || !draft.trim() || pending"
           @click="send"
         >
@@ -135,24 +136,24 @@ function files(event: Event) {
         </button>
       </div>
       <div v-if="choice" class="long-text-prompt" role="status">
-        <span>Long message detected. Send as:</span>
+        <span>{{ t('Long message detected. Send as:') }}</span>
         <button
           class="text-button"
           :disabled="!connected || pending"
           @click="sendMessage"
         >
-          Send as Message
+          {{ t('Send as Message') }}
         </button>
         <button
           class="text-button"
           :disabled="!connected || pending"
           @click="sendTXT"
         >
-          Send as TXT
+          {{ t('Send as TXT') }}
         </button>
       </div>
       <p v-else-if="notice" class="composer-notice" role="status">
-        {{ notice }}
+        {{ translateNotice(notice) }}
       </p>
     </div>
   </footer>

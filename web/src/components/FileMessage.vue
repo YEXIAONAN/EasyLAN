@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t, notice } from "../i18n";
 import { inject } from "vue";
 import type { FileInfo } from "../types/message";
 import { formatBytes } from "../format";
@@ -35,7 +36,7 @@ const preview = inject(previewFileKey);
         class="text-button"
         @click="preview(file)"
       >
-        Preview
+        {{ t('Preview') }}
       </button>
       <a
         class="download-button"
@@ -43,12 +44,12 @@ const preview = inject(previewFileKey);
         :download="file.name"
         :aria-disabled="checking"
         @click.prevent="download"
-        >{{ checking ? "Checking…" : "Download" }}
+        >{{ checking ? t("Checking…") : t("Download") }}
         <span aria-hidden="true">↓</span></a
       >
     </div>
     <p v-if="error" class="transfer-error full-width" role="alert">
-      {{ error }}
+      {{ notice(error) }}
     </p>
   </div>
 </template>

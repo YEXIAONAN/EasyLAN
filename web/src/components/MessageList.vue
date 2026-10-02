@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t, systemMessage } from "../i18n";
 import { computed, nextTick, ref, watch } from "vue";
 import type { Message } from "../types/message";
 import MessageItem from "./MessageItem.vue";
@@ -34,7 +35,7 @@ watch(
   <section
     ref="container"
     class="message-list"
-    aria-label="Chat messages"
+    :aria-label="t('Chat messages')"
     @scroll="onScroll"
   >
     <div class="message-stream">
@@ -61,15 +62,15 @@ watch(
             stroke-linecap="round"
           />
         </svg>
-        <h2>No messages yet</h2>
-        <p>Send a message or drop a file to share with this network.</p>
+        <h2>{{ t('No messages yet') }}</h2>
+        <p>{{ t('Send a message or drop a file to share with this network.') }}</p>
         <p class="session-hint">
-          Messages clear on refresh. Files expire when the server stops.
+          {{ t('Messages clear on refresh. Files expire when the server stops.') }}
         </p>
       </div>
       <template v-for="group in groups" :key="group.key">
         <div v-if="group.system" class="system-message">
-          {{ group.messages[0].content }}
+          {{ systemMessage(group.messages[0].content) }}
         </div>
         <article
           v-else
@@ -77,8 +78,8 @@ watch(
           :class="{ own: group.own }"
           :aria-label="
             group.own
-              ? 'Your messages'
-              : `Messages from ${group.messages[0].username}`
+              ? t('Your messages')
+              : t('Messages from {name}', { name: group.messages[0].username || '?' })
           "
         >
           <div
@@ -115,7 +116,7 @@ watch(
       class="new-message-button button primary"
       @click="bottom"
     >
-      {{ unread }} new {{ unread === 1 ? "message" : "messages" }} ↓
+      {{ t(unread === 1 ? "{count} new message" : "{count} new messages", { count: unread }) }} ↓
     </button>
   </section>
 </template>

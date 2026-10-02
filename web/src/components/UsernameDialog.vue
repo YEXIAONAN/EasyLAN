@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { t } from "../i18n";
 import { nextTick, ref, watch } from "vue";
 import { validName } from "../composables/useUsername";
 const props = defineProps<{ open: boolean; username: string }>();
@@ -58,17 +59,17 @@ function trap(event: KeyboardEvent) {
       <div class="brand-mark">L<span>·</span></div>
 
       <h1 id="welcome-title">
-        {{ username ? "Change your name" : "Welcome to LocalChat" }}
+        {{ username ? t("Change your name") : t("Welcome to LocalChat") }}
       </h1>
       <p class="dialog-description">
-        Choose a name to identify this browser on your local network.
+        {{ t('Choose a name to identify this browser on your local network.') }}
       </p>
-      <label for="username">Your name</label>
+      <label for="username">{{ t('Your name') }}</label>
       <input
         id="username"
         ref="input"
         v-model="name"
-        placeholder="e.g. Waiting or Server-01"
+        :placeholder="t('e.g. Waiting or Server-01')"
         autocomplete="nickname"
         :aria-invalid="invalid"
         aria-describedby="name-hint"
@@ -76,12 +77,12 @@ function trap(event: KeyboardEvent) {
       <p id="name-hint" class="input-hint" :class="{ 'text-danger': invalid }">
         {{
           invalid
-            ? "Use 1–32 characters, without control characters."
-            : "Saved in this browser. No account required."
+            ? t("Use 1–32 characters, without control characters.")
+            : t("Saved in this browser. No account required.")
         }}
       </p>
       <button class="button primary full-width" type="submit">
-        {{ username ? "Save name" : "Enter LocalChat" }}
+        {{ username ? t("Save name") : t("Enter LocalChat") }}
         <span aria-hidden="true">↗</span>
       </button>
       <button
@@ -90,7 +91,7 @@ function trap(event: KeyboardEvent) {
         type="button"
         @click="emit('close')"
       >
-        Cancel
+        {{ t('Cancel') }}
       </button>
     </form>
   </div>

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, provide, ref } from "vue";
+import SettingsDialog from "./components/SettingsDialog.vue";
+import { t, notice } from "./i18n";
 import ChatSidebar from "./components/ChatSidebar.vue";
 import ChatHeader from "./components/ChatHeader.vue";
 import MessageList from "./components/MessageList.vue";
@@ -27,6 +29,12 @@ const {
   sendText,
   soundEnabled,
   setSoundEnabled,
+  sentSoundEnabled,
+  receivedTone,
+  sentTone,
+  setSentSoundEnabled,
+  setTone,
+  previewSound,
 } = useWebSocket(username);
 const {
   uploads,
@@ -41,6 +49,18 @@ const {
 const media = window.matchMedia("(max-width: 767px)");
 const mobile = ref(media.matches);
 const drawerOpen = ref(false);
+const settingsOpen = ref(false);
+const sidebar = ref<InstanceType<typeof ChatSidebar>>();
+function openSettings() {
+  drawerOpen.value = false;
+  settingsOpen.value = true;
+}
+async function closeSettings() {
+  settingsOpen.value = false;
+  await nextTick();
+  if (mobile.value) header.value?.focusMenu();
+  else sidebar.value?.focusSettings();
+}
 const header = ref<InstanceType<typeof ChatHeader>>();
 const previewFile = ref<FileInfo | null>(null);
 provide(previewFileKey, (file) => {
@@ -65,7 +85,7 @@ function rename() {
   dialogOpen.value = true;
 }
 function queueFiles(files: File[]) {
-  if (dialogOpen.value || state.value !== "connected") {
+  if (dialogOpen.value || settingsOpen.value || state.value !== "connected") {
     uploadError.value = "Connect to LocalChat before sending files.";
     return;
   }
@@ -73,14 +93,14 @@ function queueFiles(files: File[]) {
 }
 const { dragging } = useFileDrop(queueFiles);
 async function queueTextFile(file: File): Promise<boolean> {
-  if (dialogOpen.value || state.value !== "connected") return false;
+  if (dialogOpen.value || settingsOpen.value || state.value !== "connected") return false;
   const [upload] = addFiles([file]);
   return upload ? waitForSession(upload) : false;
 }
 </script>
 
 <template>
-  <div class="app-layout" :inert="dialogOpen || !!previewFile">
+  <div class="app-layout" :inert="dialogOpen || !!previewFile || settingsOpen">
     <div
       v-if="mobile && drawerOpen"
       class="drawer-backdrop"
@@ -88,11 +108,11 @@ async function queueTextFile(file: File): Promise<boolean> {
       @click="closeDrawer"
     ></div>
     <ChatSidebar
+      ref="sidebar"
       :devices="devices"
       :version="version"
       :info-loading="infoLoading"
-      :sound-enabled="soundEnabled"
-      @sound="setSoundEnabled"
+      @settings="openSettings"
       :client-id="clientId"
       :state="state"
       :mobile="mobile"
@@ -112,7 +132,7 @@ async function queueTextFile(file: File): Promise<boolean> {
       <section
         v-if="uploads.length"
         class="transfer-tray"
-        aria-label="File transfers"
+        :aria-label="t('File transfers')"
       >
         <FileTransferCard
           v-for="upload in uploads"
@@ -125,10 +145,10 @@ async function queueTextFile(file: File): Promise<boolean> {
         />
       </section>
       <div v-if="error || uploadError" class="error-banner" role="alert">
-        <span>{{ error || uploadError }}</span
+        <span>{{ notice(error || uploadError) }}</span
         ><button
           class="icon-button"
-          aria-label="Dismiss error"
+          :aria-label="t('Dismiss error')"
           @click="
             error = '';
             uploadError = '';
@@ -145,6 +165,18 @@ async function queueTextFile(file: File): Promise<boolean> {
       />
     </main>
   </div>
+  <SettingsDialog
+    v-if="settingsOpen"
+    :sound-enabled="soundEnabled"
+    :sent-sound-enabled="sentSoundEnabled"
+    :received-tone="receivedTone"
+    :sent-tone="sentTone"
+    @sound="setSoundEnabled"
+    @sent-sound="setSentSoundEnabled"
+    @tone="setTone"
+    @preview="previewSound"
+    @close="closeSettings"
+  />
   <UsernameDialog
     :open="dialogOpen"
     :username="username"
@@ -156,11 +188,11 @@ async function queueTextFile(file: File): Promise<boolean> {
     :file="previewFile"
     @close="previewFile = null"
   />
-  <div v-if="dragging && !dialogOpen && !previewFile" class="drop-overlay">
+  <div v-if="dragging && !dialogOpen && !previewFile && !settingsOpen" class="drop-overlay">
     <div>
       <span class="drop-symbol" aria-hidden="true">↥</span>
-      <h2>Drop files to send</h2>
-      <p>Up to 1 GB per file</p>
+      <h2>{{ t('Drop files to send') }}</h2>
+      <p>{{ t('Up to 1 GB per file') }}</p>
     </div>
   </div>
 </template>

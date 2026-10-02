@@ -53,13 +53,25 @@ LAN
 ./localchat -h
 ```
 
+## 设置与语言
+
+点击侧栏左下角 **Settings** 打开设置，语言和声音统一放在这里。支持 **English** 与 **简体中文**，首次打开默认英文；手动选择保存在 `localStorage` 的 `localchat.language`。切换立即生效，无需刷新，不重建聊天连接，也不改变已有消息、用户名、文件名或输入草稿。设置支持 Esc 关闭与键盘焦点循环。
+
+翻译集中在 `web/src/i18n.ts`，使用 Vue 原生响应式与简单字典，无额外国际化依赖。常见界面、状态、系统事件与错误提示随语言更新；未知服务端诊断保留原文。
+
 ## 消息提醒
 
-页面仍打开且 `document.visibilityState` 不为 `visible` 时，其他连接发送的文字或完成上传的文件会增加未读数：标题显示 `(1) LocalChat`，超过 99 显示 `(99+) LocalChat`，原 favicon 右上角显示红点。重新可见立即清零，不弹 Toast。前台消息、自己的回显、系统/连接/在线设备事件以及上传分片和进度均不提醒。
+页面仍打开，但标签页隐藏或浏览器窗口失去焦点时，其他连接发送的文字或完成上传的文件会增加未读数：标题显示 `(1) LocalChat`，超过 99 显示 `(99+) LocalChat`，原 favicon 右上角显示红点。重新可见并获得焦点时立即清零，不弹 Toast。前台对方消息、自己的回显、系统/连接/在线设备事件以及上传分片和进度均不增加未读数或播放接收音。
 
-Sidebar Footer 的 **Message sound · On / Off** 只控制声音，默认开启；仅该偏好保存到 `localStorage` 的 `localchat.notification.sound`。未读数属于本页生命周期，刷新清零。声音由 Web Audio 生成约 280ms 的轻量双音，400ms 内的密集消息合并声音，未读数仍逐条累计。首次点击或键盘交互尝试解锁音频；浏览器不支持或阻止音频时，聊天及标题/favicon 提醒继续正常。
+**Settings → Sounds** 提供 **Receive sound** 与 **Send sound** 两个独立开关，均默认开启。接收音只用于后台的对方消息；发送音在服务端回显确认自己的文字消息或完成上传的文件后播放，前台也会响，但不增加未读数。发送失败、文件分片、上传进度和系统事件保持静默。
 
-以 Page Visibility 为准：有些浏览器在切到 IDE 后仍将露出的页面视为可见，此时保持静默。后台标签被浏览器冻结、休眠或丢弃时，消息处理可能延迟；关闭页面后不再接收。此功能不使用系统通知权限、Service Worker、Push API、HTTPS 或外部服务。
+两路分别可选 **Chime / Pulse / Bell / Drop / Wood** 五种音色，并有试听按钮；开启或切换音色时也会试听。每种音色的发送音采用上行双音，接收音采用下行双音，即使选同一名字也能分辨方向。所有声音由浏览器原生 Web Audio 在本地生成，约 170–305ms，无音频下载、外部服务或新增依赖。每路独立使用 400ms 节流，密集消息合并声音，未读数仍逐条累计。
+
+声音开关及音色保存在 `localStorage`：`localchat.notification.sound`（原有接收开关）、`localchat.notification.sendSound`、`localchat.notification.receiveTone`、`localchat.notification.sendTone`。原有静音偏好保留，新增发送开关默认开启；未知音色回退到默认值。未读数属于本页生命周期，刷新清零。
+
+首次点击或键盘交互尝试解锁音频；已解锁的音频被浏览器暂停后会尝试恢复。关闭某一路会取消该路尚未播放的声音，返回聊天会清除未读并取消接收音。浏览器不支持或阻止音频时，聊天及标题/favicon 提醒继续正常。
+
+以 Page Visibility 为主，并用 `document.hasFocus()` 补充 IDE / Terminal 等窗口切换；可见且有焦点时不播放对方消息的接收音。后台标签被浏览器冻结、休眠或丢弃时，消息处理可能延迟；关闭页面后不再接收。此功能不使用系统通知权限、Service Worker、Push API、HTTPS 或外部服务。
 
 ## 一键启动与端口配置
 
