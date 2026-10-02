@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ref } from "vue";
+import { ref } from "../js/state.js";
 const { useUpload, CHUNK_SIZE, MAX_CONCURRENT_UPLOADS } = await import(
   process.env.LOCALCHAT_UPLOAD_MODULE
 );

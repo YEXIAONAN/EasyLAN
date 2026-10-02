@@ -2,6 +2,8 @@ package chat
 
 import (
 	"encoding/json"
+
+	"localchat/internal/buildinfo"
 	"sort"
 	"sync"
 	"time"
@@ -48,7 +50,7 @@ func (h *Hub) register(c *client, d Device) bool {
 	h.clients[c] = d
 	data, _ := json.Marshal(Message{Type: "welcome", ClientID: d.ID, IP: d.IP})
 	c.send <- data
-	h.enqueueLocked(Message{Type: "system", Content: d.Username + " joined LocalChat", Timestamp: time.Now().Unix()})
+	h.enqueueLocked(Message{Type: "system", Content: d.Username + " joined " + buildinfo.Name, Timestamp: time.Now().Unix()})
 	h.presenceLocked()
 	return true
 }
@@ -62,7 +64,7 @@ func (h *Hub) unregister(c *client) {
 	}
 	delete(h.clients, c)
 	close(c.send)
-	h.enqueueLocked(Message{Type: "system", Content: d.Username + " left LocalChat", Timestamp: time.Now().Unix()})
+	h.enqueueLocked(Message{Type: "system", Content: d.Username + " left " + buildinfo.Name, Timestamp: time.Now().Unix()})
 	h.presenceLocked()
 }
 

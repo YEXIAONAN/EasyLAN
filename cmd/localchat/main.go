@@ -51,7 +51,7 @@ func run() error {
 	for _, ip := range network.LANAddresses() {
 		fmt.Printf("  http://%s:%s\n", ip, port)
 	}
-	fmt.Println("\nOpen LocalChat from another device on the same network.\nIf other devices cannot connect, check whether the TCP port is allowed by your firewall.\n\nPress Ctrl+C to stop.")
+	fmt.Println("\nOpen EasyLAN from another device on the same network.\nIf other devices cannot connect, check whether the TCP port is allowed by your firewall.\n\nPress Ctrl+C to stop.")
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	result := make(chan error, 1)
@@ -61,7 +61,7 @@ func run() error {
 	}
 	select {
 	case <-ctx.Done():
-		fmt.Println("\nStopping LocalChat…")
+		fmt.Println("\nStopping EasyLAN…")
 		app.Hub.Close()
 		shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()

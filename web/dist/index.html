@@ -1,15 +1,51 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#FAFBFA" />
-    <title>LocalChat</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <script type="module" crossorigin src="/assets/index-DopIjFZh.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-2X_I15cq.css">
-  </head>
-  <body>
-    <div id="app"></div>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F7F8F7">
+  <meta name="description" content="EasyLAN — simple, offline local network chat and temporary file sharing. No accounts or cloud.">
+  <title>EasyLAN</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <div class="brand"><img src="/logo.svg" width="30" height="30" alt=""><span>Easy<span class="brand-lan">LAN</span></span></div>
+      <span class="network-label" data-i18n="Local Network">Local Network</span>
+      <div class="topbar-actions">
+        <button id="devices-button" class="devices-button" aria-controls="devices-drawer" aria-expanded="false" data-label="View connected devices"><span class="device-symbol" aria-hidden="true">◉</span><span id="device-count">0 online</span></button>
+        <span id="connection-status" class="connection-status"><i class="status-dot" aria-hidden="true"></i><span>Connecting</span></span>
+        <button id="settings-button" class="icon-button" data-label="Settings"></button>
+      </div>
+    </header>
+    <main id="chat-main" class="chat-main">
+      <section id="messages" class="message-list" data-label="Chat messages">
+        <div id="message-stream" class="message-stream">
+          <div id="empty-state" class="empty-state"><img src="/logo.svg" width="44" height="44" alt=""><h1>EasyLAN</h1><p data-i18n="Same network. Chat and share.">Same network. Chat and share.</p><span data-i18n="Drop a file or send your first message.">Drop a file or send your first message.</span></div>
+        </div>
+      </section>
+      <button id="new-messages" class="new-message-button" hidden></button>
+      <section id="transfer-tray" class="transfer-tray" data-label="File transfers" hidden></section>
+      <div id="error-banner" class="error-banner" role="alert" hidden><span></span><button class="icon-button" data-label="Dismiss error">×</button></div>
+      <footer class="composer-area">
+        <div class="composer-shell">
+          <div id="attachments" class="attachment-queue" data-label="Attachments" hidden></div>
+          <div class="composer-row"><button id="attach-button" class="icon-button attach-button" data-label="Attach files"></button><input id="file-picker" type="file" multiple hidden><textarea id="draft" rows="1" data-label="Message" data-placeholder="Message, paste an image, or drop a file…"></textarea><button id="send-button" class="send-button" data-label="Send" disabled></button></div>
+          <div id="long-text-choice" class="long-text-prompt" role="status" hidden><span data-i18n="Long message detected. Send as:"></span><button id="send-message" class="text-button" data-i18n="Send as Message"></button><button id="send-txt" class="text-button" data-i18n="Send as TXT"></button></div>
+          <p id="composer-notice" class="composer-notice" role="status" hidden></p>
+        </div>
+      </footer>
+      <div id="drop-overlay" class="drop-overlay" hidden aria-hidden="true"><span data-i18n="Drop files to attach">Drop files to attach</span></div>
+    </main>
+  </div>
+  <div id="modal-root"></div>
+  <noscript>EasyLAN needs JavaScript for local chat and file transfers.</noscript>
+  <script type="module" src="/js/app.js"></script>
+</body>
 </html>

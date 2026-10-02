@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computed } from "vue";
+const computed = fn => ({ get value() { return fn(); } });
 const { locale, initializeLocale, setLocale, t, notice, systemMessage } =
   await import(process.env.LOCALCHAT_I18N_MODULE);
 
@@ -57,9 +57,9 @@ test("live translations update reactive consumers, preserve interpolation exactl
 test("only known system/error templates are translated; identities and arbitrary notice details stay intact", () => {
   environment();
   setLocale("zh-CN");
-  const name = "Copy joined LocalChat";
-  assert.equal(systemMessage(`${name} joined LocalChat`), `${name} 加入了 LocalChat`);
-  assert.equal(systemMessage("Waiting left LocalChat"), "Waiting 离开了 LocalChat");
+  const name = "Copy joined EasyLAN";
+  assert.equal(systemMessage(`${name} joined EasyLAN`), `${name} 加入了 EasyLAN`);
+  assert.equal(systemMessage("Waiting left EasyLAN"), "Waiting 离开了 EasyLAN");
   assert.equal(systemMessage("opaque server event"), "opaque server event");
   assert.equal(notice("Settings.txt exceeds the 1 GB file limit."), "Settings.txt 超过 1 GB 文件大小限制。");
   assert.equal(notice("Request failed (503)."), "请求失败（503）。");

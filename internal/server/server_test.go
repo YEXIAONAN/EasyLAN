@@ -27,11 +27,28 @@ func TestEmbeddedFrontendAndOriginChecks(t *testing.T) {
 	}
 	body, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
-	if err != nil || resp.StatusCode != 200 || !strings.Contains(string(body), "<div id=\"app\"></div>") {
+	if err != nil || resp.StatusCode != 200 || !strings.Contains(string(body), "EasyLAN") {
 		t.Fatal("embedded frontend missing")
 	}
 	if resp.Header.Get("Content-Security-Policy") == "" {
 		t.Fatal("missing CSP")
+	}
+	if !strings.Contains(string(body), `src="/js/app.js"`) || strings.Contains(string(body), `/src/main.ts`) {
+		t.Fatal("frontend must use native JavaScript modules")
+	}
+	for _, asset := range []string{"/logo.svg", "/favicon.svg", "/js/app.js", "/js/composer.js", "/css/tokens.css"} {
+		response, err := http.Get(srv.URL + asset)
+		if err != nil {
+			t.Fatal(err)
+		}
+		content, _ := io.ReadAll(response.Body)
+		response.Body.Close()
+		if response.StatusCode != http.StatusOK || len(content) == 0 {
+			t.Fatalf("missing embedded EasyLAN asset %s", asset)
+		}
+	}
+	if !strings.Contains(resp.Header.Get("Content-Security-Policy"), "img-src 'self' data: blob:") {
+		t.Fatal("local attachment thumbnails require blob image sources")
 	}
 	req, _ := http.NewRequest("POST", srv.URL+"/api/files", strings.NewReader("{}"))
 	req.Header.Set("Origin", "http://untrusted.example")
@@ -84,7 +101,7 @@ func TestInfoReportsBinaryVersion(t *testing.T) {
 			if err := json.Unmarshal(response.Body.Bytes(), &info); err != nil {
 				t.Fatal(err)
 			}
-			if info.Name != "LocalChat" || info.Version != version || info.ChunkSize != 16*1024*1024 {
+			if info.Name != "EasyLAN" || info.Version != version || info.ChunkSize != 16*1024*1024 {
 				t.Fatalf("wrong binary identity or missing existing limits: %+v", info)
 			}
 		})

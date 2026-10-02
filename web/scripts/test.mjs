@@ -1,0 +1,10 @@
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { readdir } from 'node:fs/promises';
+const root = new URL('../', import.meta.url);
+const modules = { I18N: 'i18n', NOTIFICATION: 'notifications', WEBSOCKET: 'websocket', UPLOAD: 'files', PRESENTATION: 'messages', LONG_TEXT: 'longText', PREVIEW: 'preview' };
+const env = { ...process.env };
+for (const [key, name] of Object.entries(modules)) env[`LOCALCHAT_${key}_MODULE`] = new URL(`js/${name}.js`, root).href;
+const files = (await readdir(new URL('tests/', root))).filter(file => file.endsWith('.test.mjs')).map(file => fileURLToPath(new URL(`tests/${file}`, root)));
+const result = spawnSync(process.execPath, ['--test', ...files], { stdio: 'inherit', env });
+process.exitCode = result.status ?? 1;

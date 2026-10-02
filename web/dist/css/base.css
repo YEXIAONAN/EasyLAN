@@ -1,0 +1,25 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body { font: 14px/1.5 var(--font-ui); color: var(--color-text); background: var(--color-bg); -webkit-font-smoothing: antialiased; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; border: 0; background: none; }
+button:disabled { cursor: default; opacity: .4; }
+a { color: var(--color-brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button, a, input, select, textarea { outline: none; }
+:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 3px; }
+button { transition: background var(--motion), color var(--motion); }
+button:hover:not(:disabled) { background: var(--color-subtle); }
+[hidden] { display: none !important; }
+h1, h2, h3, p { margin: 0; }
+svg { width: 20px; height: 20px; flex: none; }
+.icon-button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 8px; border-radius: var(--radius-sm); color: var(--color-text-secondary); flex: none; }
+.text-button { padding: 4px 6px; border-radius: var(--radius-sm); color: var(--color-brand); font-size: 12px; font-weight: 600; }
+.button { min-height: 38px; padding: 8px 14px; border-radius: var(--radius-md); background: var(--color-subtle); font-weight: 600; }
+.button.primary, .send-button { background: var(--color-brand); color: var(--color-surface); }
+.button.primary:hover:not(:disabled), .send-button:hover:not(:disabled) { background: var(--color-brand-hover); }
+.input { min-width: 0; width: 100%; padding: 9px 11px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+select { padding: 6px 9px; max-width: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); }
+.text-danger { color: var(--color-danger); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

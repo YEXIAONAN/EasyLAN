@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { createRenderer, ref } from "vue";
+import { ref } from "../js/state.js";
 const { useNotification, SOUND_PRESETS } = await import(
   process.env.LOCALCHAT_NOTIFICATION_MODULE
 );
@@ -28,7 +28,7 @@ function environment({
   };
   const drawing = [];
   class Doc extends EventTarget {
-    title = "LocalChat";
+    title = "EasyLAN";
     visibilityState = "visible";
     focused = true;
     hasFocus() {
@@ -160,21 +160,21 @@ test("visible chat stays silent; hidden peers update count/title/dot, burst audi
   n.notifyIncomingMessage(peer());
   assert.equal(n.unreadCount.value, 0);
   assert.equal(env.sounds.length, 0);
-  assert.equal(env.document.title, "LocalChat");
+  assert.equal(env.document.title, "EasyLAN");
   env.hide();
   n.notifyIncomingMessage(peer());
-  assert.equal(env.document.title, "(1) LocalChat");
+  assert.equal(env.document.title, "(1) EasyLAN");
   assert.equal(env.attributes.get("href"), "data:image/png;base64,unread");
   assert.equal(env.sounds.length, 2); // one two-tone ding-dong, not two notifications
   assert.equal(env.sounds[0].frequency.value, 660);
   assert.equal(env.sounds[1].frequency.value, 520);
   assert.ok(env.sounds[1].stopTime - env.sounds[0].startTime < 0.35);
   n.notifyIncomingMessage(peer("file"));
-  assert.equal(env.document.title, "(2) LocalChat");
+  assert.equal(env.document.title, "(2) EasyLAN");
   assert.equal(env.sounds.length, 2);
   env.show();
   assert.equal(n.unreadCount.value, 0);
-  assert.equal(env.document.title, "LocalChat");
+  assert.equal(env.document.title, "EasyLAN");
   assert.equal(env.attributes.get("href"), "/favicon.svg");
   assert.equal(env.attributes.get("type"), "image/svg+xml");
   assert.equal(env.sounds.length, 2);
@@ -219,7 +219,7 @@ test("same-name peers notify; own IDs never add unread, and non-chat events stay
   assert.equal(n.unreadCount.value, 0);
   n.notifyIncomingMessage(peer("file"));
   assert.equal(n.unreadCount.value, 1);
-  assert.equal(env.document.title, "(1) LocalChat");
+  assert.equal(env.document.title, "(1) EasyLAN");
   n.dispose();
 });
 
@@ -232,7 +232,7 @@ test("title caps at 99+; muted sound persists while unread state resets across p
   env.hide();
   for (let i = 0; i < 101; i++) n.notifyIncomingMessage(peer());
   assert.equal(n.unreadCount.value, 101);
-  assert.equal(env.document.title, "(99+) LocalChat");
+  assert.equal(env.document.title, "(99+) EasyLAN");
   assert.equal(env.sounds.length, 0);
   assert.deepEqual(
     [...env.storage],
@@ -242,7 +242,7 @@ test("title caps at 99+; muted sound persists while unread state resets across p
   const refreshed = useNotification(ref(new Set()));
   assert.equal(refreshed.soundEnabled.value, false);
   assert.equal(refreshed.unreadCount.value, 0);
-  assert.equal(env.document.title, "LocalChat");
+  assert.equal(env.document.title, "EasyLAN");
   assert.equal(env.attributes.get("href"), "/favicon.svg");
   refreshed.dispose();
 });
@@ -260,14 +260,14 @@ test("autoplay is unlocked only by interaction; audio absence/failure cannot blo
     await n.unlockAudio();
     assert.equal(n.audioUnlocked.value, !options.blocked && !options.noAudio);
     n.notifyIncomingMessage(peer());
-    assert.equal(env.document.title, "(2) LocalChat");
+    assert.equal(env.document.title, "(2) EasyLAN");
     assert.equal(env.attributes.get("href"), "data:image/png;base64,unread");
     n.dispose();
     assert.ok(env.contexts.every((context) => context.state === "closed"));
     env.document.dispatchEvent(new Event("pointerdown"));
     env.hide();
     n.notifyIncomingMessage(peer());
-    assert.equal(env.document.title, "LocalChat");
+    assert.equal(env.document.title, "EasyLAN");
   }
 });
 
@@ -294,7 +294,7 @@ test("late favicon loading cannot revive cleared badges; blocked canvas/storage 
   fallback.setSoundEnabled(false);
   failed.hide();
   fallback.notifyIncomingMessage(peer());
-  assert.equal(failed.document.title, "(1) LocalChat");
+  assert.equal(failed.document.title, "(1) EasyLAN");
   assert.equal(failed.attributes.get("href"), "/favicon.svg");
   fallback.dispose();
 });
@@ -316,26 +316,7 @@ test("actual WebSocket handler displays messages first, ignores presence/system 
       this.onclose?.();
     }
   };
-  let client;
-  const renderer = createRenderer({
-    createElement: () => ({}),
-    createText: () => ({}),
-    createComment: () => ({}),
-    insert() {},
-    remove() {},
-    setText() {},
-    setElementText() {},
-    patchProp() {},
-    parentNode() {},
-    nextSibling() {},
-  });
-  const app = renderer.createApp({
-    setup() {
-      client = useWebSocket(ref("Waiting"));
-      return () => null;
-    },
-  });
-  app.mount({});
+  const client = useWebSocket(ref("Waiting"));
   const socket = sockets[0];
   const receive = (message) =>
     socket.onmessage({ data: JSON.stringify(message) });
@@ -346,21 +327,21 @@ test("actual WebSocket handler displays messages first, ignores presence/system 
   receive(peer("file", "self"));
   receive(peer("system"));
   receive({ type: "presence", devices: [] });
-  assert.equal(env.document.title, "LocalChat");
+  assert.equal(env.document.title, "EasyLAN");
   receive(peer());
   receive(peer("file"));
   assert.equal(client.messages.value.length, 5);
-  assert.equal(env.document.title, "(2) LocalChat");
+  assert.equal(env.document.title, "(2) EasyLAN");
   // The server-issued new connection ID is added alongside the earlier one.
   receive({ type: "welcome", clientId: "new-self" });
   receive(peer("file", "self"));
   receive(peer("text", "new-self"));
-  assert.equal(env.document.title, "(2) LocalChat");
+  assert.equal(env.document.title, "(2) EasyLAN");
   assert.equal(client.error.value, "");
-  app.unmount();
+  client.dispose();
   env.hide();
   env.document.dispatchEvent(new Event("keydown"));
-  assert.equal(env.document.title, "LocalChat");
+  assert.equal(env.document.title, "EasyLAN");
   assert.equal(env.attributes.get("href"), "/favicon.svg");
 });
 
@@ -372,7 +353,7 @@ test("a visible but unfocused desktop window notifies; focus clears and hidden f
   env.blur();
   assert.equal(env.document.visibilityState, "visible");
   n.notifyIncomingMessage(peer());
-  assert.equal(env.document.title, "(1) LocalChat");
+  assert.equal(env.document.title, "(1) EasyLAN");
   assert.equal(env.sounds.length, 2);
   assert.ok(env.sounds[0].startTime > env.contexts[0].currentTime);
   env.hide();
@@ -385,7 +366,7 @@ test("a visible but unfocused desktop window notifies; focus clears and hidden f
   n.dispose();
   env.blur();
   env.focus();
-  assert.equal(env.document.title, "LocalChat");
+  assert.equal(env.document.title, "EasyLAN");
 });
 
 test("enabling sound plays one foreground preview; rapid disabling cancels pending preview", async () => {
@@ -394,7 +375,7 @@ test("enabling sound plays one foreground preview; rapid disabling cancels pendi
   n.setSoundEnabled(true);
   await n.unlockAudio();
   assert.equal(env.sounds.length, 2);
-  assert.equal(env.document.title, "LocalChat");
+  assert.equal(env.document.title, "EasyLAN");
   assert.equal(n.unreadCount.value, 0);
   n.dispose();
   const delayed = environment({ saved: "false" }),
@@ -480,7 +461,7 @@ test("five local presets preview distinct send/receive patterns, never changing 
       else assert.ok(frequencies[0] < frequencies[1]);
       patterns.add(`${pair[0].type}:${frequencies.join(",")}`);
       assert.ok(pair[1].stopTime - pair[0].startTime < 0.35);
-      assert.equal(env.document.title, "LocalChat");
+      assert.equal(env.document.title, "EasyLAN");
       assert.equal(n.unreadCount.value, 0);
     }
   }
@@ -497,7 +478,7 @@ test("confirmed own text/files use send sound in foreground/background and retai
       n.notifyIncomingMessage(peer(type, type === "file" ? "old-self" : "self"));
       assert.equal(env.sounds.length, 2);
       assert.ok(env.sounds[0].frequency.value < env.sounds[1].frequency.value);
-      assert.equal(env.document.title, "LocalChat");
+      assert.equal(env.document.title, "EasyLAN");
       assert.equal(n.unreadCount.value, 0);
       assert.equal(env.attributes.get("href"), "/favicon.svg");
       n.notifyIncomingMessage(peer(type, "self"));
@@ -516,7 +497,7 @@ test("send and receive channels have independent mute/cooldown; disabling send p
   assert.notEqual(env.sounds[0].stopTime, undefined); // receive mute does not stop send
   env.hide();
   n.notifyIncomingMessage(peer());
-  assert.equal(env.document.title, "(1) LocalChat");
+  assert.equal(env.document.title, "(1) EasyLAN");
   assert.equal(env.sounds.length, 2);
   n.setSentSoundEnabled(false);
   assert.equal(env.sounds[0].stopTime, undefined); // send mute stops its active nodes
@@ -527,7 +508,7 @@ test("send and receive channels have independent mute/cooldown; disabling send p
   assert.equal(env.sounds.length, 4);
   n.notifyIncomingMessage(peer("file", "self"));
   assert.equal(env.sounds.length, 4);
-  assert.equal(env.document.title, "(1) LocalChat");
+  assert.equal(env.document.title, "(1) EasyLAN");
   n.dispose();
 
   const both = environment(), independent = useNotification(ref(new Set(["self"])));
@@ -560,7 +541,7 @@ test("pending send audio survives return but is cancelled by mute/disposal; prev
     resume();
     await settle();
     assert.equal(env.sounds.length, cancel === "return" ? 2 : 0);
-    assert.equal(env.document.title, "LocalChat");
+    assert.equal(env.document.title, "EasyLAN");
     n.dispose();
   }
   const env = environment(), n = useNotification(ref(new Set()));
@@ -580,7 +561,7 @@ test("missing or blocked audio never breaks own message receipt or preferences",
     n.notifyIncomingMessage(peer("text", "self"));
     n.notifyIncomingMessage(peer("file", "self"));
     assert.equal(env.sounds.length, 0);
-    assert.equal(env.document.title, "LocalChat");
+    assert.equal(env.document.title, "EasyLAN");
     n.dispose();
   }
 });
@@ -600,16 +581,7 @@ test("WebSocket sending waits for server acknowledgement: failures/chunks are si
     send(data) { this.sent.push(JSON.parse(data)); }
     close() { this.readyState = 3; this.onclose?.(); }
   };
-  let client;
-  const renderer = createRenderer({
-    createElement: () => ({}), createText: () => ({}), createComment: () => ({}),
-    insert() {}, remove() {}, setText() {}, setElementText() {}, patchProp() {},
-    parentNode() {}, nextSibling() {},
-  });
-  const app = renderer.createApp({
-    setup() { client = useWebSocket(ref("Sound-test")); return () => null; },
-  });
-  app.mount({});
+  let client = useWebSocket(ref("Sound-test"));
   const socket = sockets[0];
   const receive = (message) => socket.onmessage({ data: JSON.stringify(message) });
   env.document.dispatchEvent(new Event("pointerdown"));
@@ -628,7 +600,7 @@ test("WebSocket sending waits for server acknowledgement: failures/chunks are si
   receive(peer("text", "self"));
   assert.equal(client.messages.value.length, 1);
   assert.equal(env.sounds.length, 2);
-  assert.equal(env.document.title, "LocalChat");
+  assert.equal(env.document.title, "EasyLAN");
   client.setSentSoundEnabled(false);
   for (let i = 0; i < 64; i++) receive({ type: "chunk", clientId: "self" });
   receive({ type: "error", content: "Upload failed" });
@@ -638,12 +610,9 @@ test("WebSocket sending waits for server acknowledgement: failures/chunks are si
   await settle();
   assert.equal(env.sounds.length, 4); // enabling preview
   // A fresh composable resets the cooldown; retained ownership covers old file connections.
-  app.unmount();
+  client.dispose();
   const fileEnv = environment();
-  const fileApp = renderer.createApp({
-    setup() { client = useWebSocket(ref("Sound-test")); return () => null; },
-  });
-  fileApp.mount({});
+  client = useWebSocket(ref("Sound-test"));
   const fileSocket = sockets.at(-1);
   const receiveFile = (message) => fileSocket.onmessage({ data: JSON.stringify(message) });
   receiveFile({ type: "welcome", clientId: "old-self" });
@@ -655,6 +624,6 @@ test("WebSocket sending waits for server acknowledgement: failures/chunks are si
   receiveFile(peer("file", "old-self"));
   assert.equal(client.messages.value.length, 1);
   assert.equal(fileEnv.sounds.length, 2);
-  assert.equal(fileEnv.document.title, "LocalChat");
-  fileApp.unmount();
+  assert.equal(fileEnv.document.title, "EasyLAN");
+  client.dispose();
 });
