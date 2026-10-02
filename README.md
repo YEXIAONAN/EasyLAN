@@ -10,7 +10,7 @@ Go + WebSocket + 原生 HTML/CSS/JavaScript。所有资源嵌入单个二进制�
 
 ## 使用
 
-启动 `easylan`（Windows 为 `easylan.exe`），默认监听 `0.0.0.0:8787`。其他设备访问终端显示的 LAN 地址。输入设备名称后即可使用。
+从 [EasyLAN v1.2.0 Release](https://github.com/YEXIAONAN/LocalChat/releases/tag/v1.2.0) 下载对应系统与 CPU 的压缩包，解压后启动 `easylan`（Windows 为 `easylan.exe`），默认监听 `0.0.0.0:8787`。其他设备访问终端显示的 LAN 地址。输入设备名称后即可使用。
 
 ```sh
 ./easylan
@@ -29,7 +29,7 @@ Go + WebSocket + 原生 HTML/CSS/JavaScript。所有资源嵌入单个二进制�
 
 **临时性**：聊天只在页面内存，刷新清空；文件只保存在服务器本次会话的系统临时目录。Ctrl+C 正常退出会删除文件。服务器不回放历史，刷新不恢复上传。
 
-[现有 GitHub Releases](https://github.com/YEXIAONAN/LocalChat/releases) 的 v1.1.1 及此前程序仍名为 LocalChat；本次重构尚未发布。下一次 Tag 发布会生成 EasyLAN 程序与压缩包。仓库地址仍以真实 `origin` 为准，不因品牌变化虚构新地址。
+[GitHub Releases](https://github.com/YEXIAONAN/LocalChat/releases) 中的 v1.2.0 开始使用 EasyLAN 程序与压缩包名称；v1.1.1 及此前版本仍名为 LocalChat。GitHub 仓库暂保留 `YEXIAONAN/LocalChat`，所有链接使用实际地址。
 
 ## 文件与消息
 
@@ -124,8 +124,9 @@ CGO_ENABLED=0 go build -trimpath \
 ```sh
 git checkout main
 git pull --ff-only
-git tag v1.2.0
-git push origin v1.2.0
+# 下一个补丁版本示例
+git tag v1.2.1
+git push origin v1.2.1
 ```
 
 自动生成 `EasyLAN v1.2.0` Release，支持六个平台：

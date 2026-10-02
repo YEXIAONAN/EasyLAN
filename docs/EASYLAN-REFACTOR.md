@@ -1,6 +1,6 @@
 # EasyLAN 产品重构
 
-日期：2026-10-02。本轮仅本地修改，未创建新 Tag / 推送 / 发布。
+日期：2026-10-02。初次重构完成两个本地提交；随后按用户要求将本轮变更提交推送，并使用标准格式 `v1.2.0` Tag 触发自动 Release。
 
 ## 初始检查
 
@@ -34,6 +34,6 @@
 - Backend：go test -race ./...、go vet ./...、CGO_ENABLED=0 go build 全部通过。
 - Embed：Go 测试检查原生 app.js / composer.js / CSS / EL SVG 正常服务；验证缩略图需要的 img-src blob CSP。
 - Release：六平台本地 dev 交叉编译与打包通过；六个 SHA256、ZIP/tar 内容、Unix执行位、GOOS/GOARCH/CGO 元数据均通过。
-- CI：push main / PR；Release：仅 v*.*.* Tag。未触发远程 Actions，也未发布本次重构。
+- CI：push main / PR；Release：仅 v*.*.* Tag，版本注入来自该 Tag。发布是否成功以 GitHub Actions / Release 结果为准。
 
-浏览器工具保存的访问拒绝设置仍阻止 http://127.0.0.1:8794/；用户已文字授权并表示解除设置，工具重试仍明确返回拒绝。未通过其他地址、浏览器或 CDP 绕过。桌面/平板/手机视觉验收及真实剪贴板手势待该权限恢复，不能宣称已通过。
+浏览器工具保存的访问拒绝设置仍阻止 http://127.0.0.1:8794/；用户已文字授权并表示解除设置，工具重试仍明确返回拒绝。未通过其他地址、浏览器或 CDP 绕过。桌面/平板/手机视觉验收及真实剪贴板手势待该权限恢复，不能宣称已通过。用户随后明确确认先发布 v1.2.0，README 界面截图延后补充。仓库改名同样受 GitHub 浏览器访问权限阻止，本次保留真实 origin 和现有链接。
